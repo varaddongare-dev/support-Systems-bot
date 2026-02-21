@@ -18,7 +18,7 @@ const client = new Client({
             '--no-zygote',
             '--single-process', 
         ],
-        executablePath: '/opt/render/project/src/.cache/puppeteer/chrome/linux-145.0.7632.77/chrome-linux64/chrome'
+        
     }
 });
 
