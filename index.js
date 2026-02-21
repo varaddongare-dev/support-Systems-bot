@@ -16,7 +16,7 @@ const client = new Client({
             '--no-zygote',
             '--single-process', 
         ],
-        executablePath: '/opt/render/.cache/puppeteer/chrome/linux-121.0.6167.85/chrome-linux64/chrome'
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome'
         
     }
 });
