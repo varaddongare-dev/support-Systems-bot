@@ -85,9 +85,9 @@ client.on('message', async (msg) => {
     }
 });
 const http = require('http');
-http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.write('Neurology Bot is Online');
-    res.end();
-}).listen(process.env.PORT || 3000);
+const server = http.createServer((req, res) => {
+  res.writeHead(200, {'Content-Type': 'text/plain'});
+  res.end('Bot is running\n');
+});
+server.listen(process.env.PORT || 3000);
 client.initialize();
