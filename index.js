@@ -19,7 +19,7 @@ const client = new Client({
             '--single-process', // Helps save memory on free-tier servers
             '--disable-gpu'
         ],
-        executablePath: process.env.GOOGLE_CHROME_PATH || '/usr/bin/google-chrome'
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome'
     }
 });
 
