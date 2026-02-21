@@ -16,8 +16,7 @@ const client = new Client({
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
             '--no-zygote',
-            '--single-process', // Helps save memory on free-tier servers
-            '--disable-gpu'
+            '--single-process', 
         ],
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome'
     }
