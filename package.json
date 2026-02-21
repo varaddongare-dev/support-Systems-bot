@@ -8,8 +8,8 @@
   },
   
   "scripts": {
-    "start": "node index.js",
-   "postinstall": "puppeteer Firefox"
+    "start": "node index.js"
+   
 }
 }
 
