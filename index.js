@@ -23,6 +23,7 @@ const client = new Client({
     }
 });
 
+
 client.on('qr', (qr) => {
     console.log('--- SCAN THE QR CODE BELOW ---');
     qrcode.generate(qr, { small: true });
