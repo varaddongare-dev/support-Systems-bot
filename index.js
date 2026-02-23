@@ -2,7 +2,7 @@
 const express = require('express');
 const app = express();
 app.get('/', (req, res) => res.send('Bot is Live'));
-app.listen(process.env.PORT || 4000, '0.0.0.0');
+app.listen(process.env.PORT || 8080, '0.0.0.0');
 
 // STEP 2: The rest of your bot code starts HERE
 const { Client, LocalAuth } = require('whatsapp-web.js');
