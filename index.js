@@ -1,3 +1,20 @@
+// 1. Start Express IMMEDIATELY at the very top
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 4000;
+
+app.get('/', (req, res) => res.send('Bot is online!'));
+
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Render Health Check passed on port ${port}`);
+});
+
+// 2. ONLY THEN load the heavy WhatsApp stuff
+const { Client, LocalAuth } = require('whatsapp-web.js');
+// ... rest of your bot code
+
+
+
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 
@@ -84,14 +101,7 @@ client.on('message', async (msg) => {
         msg.reply('📍 *Neurology Center*\n📧 Email: contact.ssystems25@gmail.com\n📞 Phone: +91 97407 46668\nOur specialists are available Mon-Fri, 9 AM - 6 PM.');
     }
 });
-const server = http.createServer((req, res) => {
-  res.writeHead(200, {'Content-Type': 'text/plain'});
-  res.end('Bot is healthy and running\n');
-});
 
-// Use the PORT environment variable provided by Render or default to 3000
-const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => {
-  console.log(`Health check server is listening on port ${PORT}`);  
-});
+
+
 client.initialize();
