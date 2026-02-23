@@ -84,10 +84,14 @@ client.on('message', async (msg) => {
         msg.reply('📍 *Neurology Center*\n📧 Email: contact.ssystems25@gmail.com\n📞 Phone: +91 97407 46668\nOur specialists are available Mon-Fri, 9 AM - 6 PM.');
     }
 });
-const http = require('http');
 const server = http.createServer((req, res) => {
   res.writeHead(200, {'Content-Type': 'text/plain'});
-  res.end('Bot is running\n');
+  res.end('Bot is healthy and running\n');
 });
-server.listen(process.env.PORT || 3000);
+
+// Use the PORT environment variable provided by Render or default to 3000
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Health check server is listening on port ${PORT}`);  
+});
 client.initialize();
