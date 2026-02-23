@@ -90,7 +90,7 @@ const server = http.createServer((req, res) => {
 });
 
 // Use the PORT environment variable provided by Render or default to 3000
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
   console.log(`Health check server is listening on port ${PORT}`);  
 });
