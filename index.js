@@ -1,14 +1,9 @@
-// STEP 1: Start the server IMMEDIATELY (instantly satisfies Render)
 const express = require('express');
 const app = express();
-app.get('/', (req, res) => res.send('Bot is Live'));
-app.listen(process.env.PORT || 8080, '0.0.0.0');
+const port = process.env.PORT || 8080;
 
-// STEP 2: The rest of your bot code starts HERE
-const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
-// ... (the rest of your current code)
-
+app.get('/', (req, res) => res.send('Bot is running'));
+app.listen(port, '0.0.0.0', () => console.log(`Server on port ${port}`));
 
 
 const { Client, LocalAuth } = require('whatsapp-web.js');
