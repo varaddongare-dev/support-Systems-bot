@@ -1,15 +1,15 @@
 {
+  "name": "support-systems-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "express": "^4.18.2",
     "whatsapp-web.js": "latest",
     "qrcode-terminal": "latest",
     "puppeteer": "latest"
   }
-    ,
-  
-  "scripts": {
-    "start": "node index.js"
-   
 }
-}
-
