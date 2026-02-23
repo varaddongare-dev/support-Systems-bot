@@ -1,17 +1,13 @@
-// 1. Start Express IMMEDIATELY at the very top
+// STEP 1: Start the server IMMEDIATELY (instantly satisfies Render)
 const express = require('express');
 const app = express();
-const port = process.env.PORT || 4000;
+app.get('/', (req, res) => res.send('Bot is Live'));
+app.listen(process.env.PORT || 4000, '0.0.0.0');
 
-app.get('/', (req, res) => res.send('Bot is online!'));
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Render Health Check passed on port ${port}`);
-});
-
-// 2. ONLY THEN load the heavy WhatsApp stuff
+// STEP 2: The rest of your bot code starts HERE
 const { Client, LocalAuth } = require('whatsapp-web.js');
-// ... rest of your bot code
+const qrcode = require('qrcode-terminal');
+// ... (the rest of your current code)
 
 
 
