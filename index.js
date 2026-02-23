@@ -24,10 +24,10 @@ const client = new Client({
 
 
 client.on('qr', (qr) => {
-    console.log('--- SCAN THE QR CODE BELOW ---');
-    qrcode.generate(qr, { small: true });
+    // This 'small: true' is the secret to fixing the stretching
+    qrcode.generate(qr, {small: true});
+    console.log('New QR Code generated. Scan now!');
 });
-
 client.on('ready', () => {
     console.log(`\nSUCCESS: Neurology Support Bot is active on ${MY_NUMBER}!`);
 });
