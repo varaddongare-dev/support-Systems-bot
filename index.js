@@ -1,9 +1,14 @@
 const express = require('express');
 const app = express();
-const port = process.env.PORT || 8080;
+
+
+const port = process.env.PORT || 8080; // This lets Render choose the port
 
 app.get('/', (req, res) => res.send('Bot is running'));
-app.listen(port, '0.0.0.0', () => console.log(`Server on port ${port}`));
+
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server on port ${port}`);
+});
 
 
 const { Client, LocalAuth } = require('whatsapp-web.js');
@@ -24,9 +29,9 @@ const client = new Client({
 
 
 client.on('qr', (qr) => {
-    // This 'small: true' is the secret to fixing the stretching
+    console.log('CLICK THIS FOR A PERFECT QR CODE:');
+    console.log(`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qr)}&size=300x300`);
     qrcode.generate(qr, {small: true});
-    console.log('New QR Code generated. Scan now!');
 });
 client.on('ready', () => {
     console.log(`\nSUCCESS: Neurology Support Bot is active on ${MY_NUMBER}!`);
