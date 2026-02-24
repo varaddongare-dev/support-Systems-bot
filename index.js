@@ -89,7 +89,18 @@ client.on('message', async (msg) => {
     else if (userMessage === 'contact' || userMessage === 'contact us') {
         msg.reply('📍 *Neurology Center*\n📧 Email: contact.ssystems25@gmail.com\n📞 Phone: +91 97407 46668\nOur specialists are available Mon-Fri, 9 AM - 6 PM.');
     }
+    else if (userMessage === 'developer' || userMessage === 'credits' || userMessage === 'who developed this') {
+    msg.reply('🚀 *Project Development Board*\n\n' +
+              'This Neurology Support Bot was developed by:\n' +
+              '👨‍💻 *Varad Dongare*\n' +
+              '🎓 Student at *MIT WPU, Pune*\n' +
+              '📚 Course: *BCA Science*\n\n' +
+              'Designed to streamline patient consultations and neurology support.');
+}
+
 });
+
+
 
 
 
