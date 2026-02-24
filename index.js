@@ -95,9 +95,9 @@ client.on('message', async (msg) => {
               '👨‍💻 *Varad Dongare*\n' +
               '🎓 Student at *MIT WPU, Pune*\n' +
               '📚 Course: *BCA Science*\n\n' +
-              'Designed to streamline patient consultations and neurology support.');
+              '© 2026 Varad Dongare. All rights reserved.\n' +
+              'Designed to streamline patient consultations.');
 }
-
 });
 
 
