@@ -29,7 +29,7 @@ Connectivity: whatsapp-web.js and FastAPI
 
 Tools: qrcode-terminal for logins and dotenv for environment management.
 
-Getting Started
+## Getting Started
 
 1. Grab the code
 Bash
