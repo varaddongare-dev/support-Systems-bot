@@ -21,7 +21,7 @@ class UserMsg(BaseModel):
 
 @app.post("/process")
 async def process_message(data: UserMsg):
-    # Convert message to lowercase for easy keyword checking
+   
     text = data.message.lower()
     
     # 2. PRIORITY LOGIC: Manual Keyword Checks
