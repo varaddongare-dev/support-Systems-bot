@@ -1,57 +1,80 @@
-Support Systems Bot 🤖
-An intelligent WhatsApp automation tool built with Node.js and Python, integrated with the Google Gemini API. This bot is designed to handle automated queries, provide AI-driven responses, and streamline support workflows.
+# Support Systems Bot 🤖
 
-🚀 Features
-AI Conversations: Real-time intelligent chat powered by Gemini.
+An intelligent WhatsApp automation tool built with a **Hybrid Architecture** (Node.js + Python), integrated with the Google Gemini 2.0 API. This bot is designed to handle automated queries, provide AI-driven responses, and streamline support workflows.
 
-WhatsApp Integration: Seamless messaging via whatsapp-web.js.
+## 🚀 Features
 
-Hybrid Logic: Core automation in Node.js with specialized Python scripts.
+* **AI Conversations:** Real-time intelligent chat powered by Gemini 2.0 Flash.
+* **WhatsApp Integration:** Seamless messaging via `whatsapp-web.js`.
+* **Hybrid Logic:** Core automation and session management in Node.js with specialized AI processing in Python (FastAPI).
+* **Smart Fallbacks:** Priority keyword detection for brochures and executive profiles.
+* **Secure Config:** Professional environment-based API key management.
 
-Secure Config: Environment-based API key management using .env.
+## 🏗 System Architecture
 
-🛠️ Tech Stack
-Languages: JavaScript (Node.js), Python 3.x
+The bot operates using a dual-server setup:
 
-AI Model: Google Gemini API
+1. **Frontend (Node.js):** Handles the WhatsApp connection, QR scanning, and media (PDF) delivery.
+2. **Backend (Python/FastAPI):** Acts as the "Brain," processing text through Gemini and returning intent-based instructions to Node.js.
 
-Key Libraries: whatsapp-web.js, qrcode-terminal, dotenv, google-generativeai
+## 🛠 Tech Stack
 
-📋 Prerequisites
-Node.js (v16+)
+* **Languages:** JavaScript (Node.js), Python 3.10+
+* **AI Model:** Google Gemini 2.0 Flash
+* **Frameworks:** FastAPI (Python), Express (Node.js - for health checks)
+* **Key Libraries:** `whatsapp-web.js`, `qrcode-terminal`, `python-dotenv`, `google-genai`
 
-Python (v3.10+)
+## 📋 Prerequisites
 
-Gemini API Key from Google AI Studio
+* Node.js (v16+)
+* Python (v3.10+)
+* Gemini API Key (from [Google AI Studio](https://aistudio.google.com/))
 
-⚙️ Installation & Setup
-Clone the repository:
+## ⚙️ Installation & Setup
 
-Bash
-git clone https://github.com/varaddongare-dev/support-systems-bot.git
-cd support-systems-bot
-Install Node.js Dependencies:
+1. **Clone the repository:**
+
+   ```bash
+   git clone [https://github.com/varaddongare-dev/support-systems-bot.git](https://github.com/varaddongare-dev/support-systems-bot.git)
+   cd support-systems-bot
+
+2. **Install Node.js Dependencies:**
 
 Bash
 npm install
-Install Python Dependencies:
+
+3. **Install Python Dependencies:**
 
 Bash
 pip install -r requirements.txt
-Configure Environment Variables:
+
+4. **Configure Environment Variables:**
 Create a .env file in the root directory:
 
-Code snippet
+Code snippet:
 GEMINI_API_KEY=your_actual_api_key_here
-Run the Bot:
+BRAIN_URL=http://localhost:8000/process
+
+# Optional: CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.ex
+
+🏃 Run the Bot
+You will need two terminals open:
+
+Terminal 1 (Python Brain):
+
+Bash
+python main.py
+Terminal 2 (WhatsApp Client):
 
 Bash
 node index.js
 🚧 Roadmap
-[ ] Refine Gemini prompt engineering for better support accuracy.
+[ ] Refine Gemini system instructions for better medical/support empathy.
 
-[ ] Complete email notification integration.
+[ ] Complete automated email notification integration.
 
-[ ] Add support for image-to-text processing (Multimodal).
+[ ] Implement a database (MongoDB/PostgreSQL) for long-term session memory.
 
-Developed by Varad
+[ ] Multi-document support (PDF analysis).
+
+Developed by Varad Dongare MIT World Peace University, Pune
