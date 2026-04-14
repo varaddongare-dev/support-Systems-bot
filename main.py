@@ -5,13 +5,12 @@ from google import genai  # ✅ Using the new 2.0 SDK
 from dotenv import load_dotenv # ⬅️ Added this
 import uvicorn
 
-# Load variables from the .env file
+
 load_dotenv()
 
 app = FastAPI()
 
-# 1. SETUP THE GEMINI
-# Created an .env file for api_key used for the bot.
+
 
 api_key_env = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key_env)
@@ -24,14 +23,14 @@ async def process_message(data: UserMsg):
    
     text = data.message.lower()
     
-    # 2. PRIORITY LOGIC: Manual Keyword Checks
+    
     if "brochure" in text:
         return {"intent": "BROCHURE", "reply": "I'm sending the Support Systems brochure to you right now! ✨"}
     
     if any(keyword in text for keyword in ["doctor", "executive", "profile"]):
         return {"intent": "EXECUTIVES", "reply": "Certainly! I am sharing our Psychologist and Executive profiles with you. ✨"}
 
-    # 3. AI LOGIC: Using Gemini 2.0 Flash
+    # AI LOGIC:
     try:
         # Checking if API key is missing before calling Gemini
         if not api_key_env:
@@ -64,7 +63,7 @@ async def process_message(data: UserMsg):
             "reply": "Thank you for contacting Support Systems. We have received your message and an executive will assist you shortly. ✨"
         }
 
-# 4. START THE SERVER
+#  START THE SERVER
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     print(f"🚀 Python Brain is starting on port {port}...")
