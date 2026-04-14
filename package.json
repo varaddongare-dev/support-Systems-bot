@@ -7,9 +7,9 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "whatsapp-web.js": "latest",
-    "qrcode-terminal": "latest",
-    "puppeteer": "latest"
+    "express": "^4.22.1",
+    "puppeteer": "latest",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.34.6"
   }
 }

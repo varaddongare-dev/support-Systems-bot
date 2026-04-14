@@ -1,107 +1,133 @@
-const express = require('express');
-const app = express();
-
-
-const port = process.env.PORT || 8080; // This lets Render choose the port
-
-app.get('/', (req, res) => res.send('Bot is running'));
-
-app.listen(port, '0.0.0.0', () => {
-    console.log(`Server on port ${port}`);
-});
-
-
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
+const fs = require('fs'); 
+const nodemailer = require('nodemailer'); 
+const express = require('express'); 
 
-const MY_NUMBER = process.env.MY_NUMBER || '918433750502'; 
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.get('/', (req, res) => { res.send('Bot is Online! 🚀'); });
+app.listen(PORT, () => { console.log(`Server on port ${PORT}`); });
 
-const appointmentSessions = {};
+// 1. SETTINGS & PATHS
+const MY_NUMBER = '919740746668'; 
+// Updated with your specific Windows path
+const BROCHURE_PATH = 'C:\\Whatsapp Bot\\my-whatsapp-bot\\Clients Brochure.pdf'; 
+const LOG_FILE = 'daily_leads.csv';
+const sessions = {}; 
 
+// 2. EMAIL CONFIGURATION
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'contact.ssystems25@gmail.com',
+        pass: 'YOUR_16_CHARACTER_APP_PASSWORD' 
+    }
+});
+//check demo
+
+// 3. LOGGING & EMAIL FUNCTION
+const processLead = async (userNumber, userEmail, type, details, sendBrochure = false) => {
+    const timestamp = new Date().toLocaleString().replace(/,/g, '');
+    if (!fs.existsSync(LOG_FILE)) {
+        fs.writeFileSync(LOG_FILE, 'Date,User Number,Email,Type,Details\n');
+    }
+    const logEntry = `${timestamp},${userNumber},${userEmail},${type},${details.replace(/,/g, ';')}\n`;
+    fs.appendFile(LOG_FILE, logEntry, (err) => { if (err) console.error(err); });
+
+    const mailOptions = {
+        from: '"Support Systems" <contact.ssystems25@gmail.com>',
+        to: userEmail,
+        subject: sendBrochure ? 'Your Requested Brochure - Support Systems' : 'Request Confirmation - Support Systems',
+        text: sendBrochure 
+            ? `Hello,\n\nPlease find the Support Systems brochure attached as requested.\n\nBest regards,\nSupport Systems Team`
+            : `Hello,\n\nWe have received your request regarding ${type}. Our team will contact you shortly.\n\nBest regards,\nSupport Systems Team`,
+        attachments: fs.existsSync(BROCHURE_PATH) ? [{ filename: 'Support_Systems_Brochure.pdf', path: BROCHURE_PATH }] : []
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Email sent to: ${userEmail}`);
+    } catch (error) {
+        console.log('❌ Email error:', error.message);
+    }
+};
+
+// 4. WHATSAPP CLIENT
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        executablePath: '/opt/render/.cache/puppeteer/chrome/linux-145.0.7632.77/chrome-linux64/chrome'
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
     }
 });
 
+client.on('qr', (qr) => { qrcode.generate(qr, { small: true }); });
+client.on('ready', () => { console.log('\nSUCCESS: Support Systems Smart Bot Active!'); });
 
-client.on('qr', (qr) => {
-    console.log('CLICK THIS FOR A PERFECT QR CODE:');
-    console.log(`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qr)}&size=300x300`);
-    qrcode.generate(qr, {small: true});
-});
-client.on('ready', () => {
-    console.log(`\nSUCCESS: Neurology Support Bot is active on ${MY_NUMBER}!`);
-});
-
+// 5. CORE BOT LOGIC
 client.on('message', async (msg) => {
-    const contact = msg.from;
-    const userMessage = msg.body.toLowerCase();
-    const originalMessage = msg.body;
-
+    const userNumber = msg.from;
+    const userMessage = msg.body.trim().toLowerCase();
     
-    if (appointmentSessions[contact]) {
-        const session = appointmentSessions[contact];
+    if (msg.fromMe) { delete sessions[msg.to]; return; }
 
-        if (session.step === 'awaiting_name') {
-            session.name = originalMessage;
-            session.step = 'awaiting_phone';
-            msg.reply(`Thank you, ${session.name}. Please provide a contact phone number so our medical team can reach you:`);
-        } 
-        else if (session.step === 'awaiting_phone') {
-            session.phone = originalMessage;
-            session.step = 'awaiting_date';
-            msg.reply('What date and time would you like to request for your consultation?');
+    if (!sessions[userNumber]) {
+        if (['hi', 'hello', 'menu'].includes(userMessage)) {
+            sessions[userNumber] = { step: 'initial' };
+            msg.reply('Hi! 👋 Welcome to *Support Systems*.\n\nAre you:\n1️⃣ Existing Client\n2️⃣ New Client\n\nReply with 1 or 2');
         }
-        else if (session.step === 'awaiting_date') {
-            session.date = originalMessage;
-            session.step = 'awaiting_reason';
-            msg.reply('Could you briefly describe the symptoms or reason for the visit? (This helps us prepare for your care)');
-        } 
-        else if (session.step === 'awaiting_reason') {
-            session.reason = originalMessage;
-            
-            const summary = `*✅ Consultation Request Received* \n\n` +
-                            `👤 *Patient Name:* ${session.name}\n` +
-                            `📞 *Contact Number:* ${session.phone}\n` +
-                            `📅 *Requested Date:* ${session.date}\n` +
-                            `📝 *Notes:* ${session.reason}\n\n` +
-                            `Our neurology specialists will review your request and contact you shortly to confirm the appointment. If this is a medical emergency, please visit the nearest hospital immediately.`;
-            
-            msg.reply(summary);
-            console.log(`NEW NEUROLOGY BOOKING: ${session.name} - ${session.phone}`);
-            delete appointmentSessions[contact];
-        }
-        return; 
+        return;
     }
 
-    
-    if (userMessage === 'hi' || userMessage === 'hello') {
-        msg.reply('Welcome to Support Systems Neurology. We are here to assist you with brain health and recovery. How can we help you today?');
-    } 
-    else if (userMessage === 'book appointment' || userMessage === 'book an appointment') {
-        appointmentSessions[contact] = { step: 'awaiting_name' };
-        msg.reply('To book a consultation, please start by providing the *Patient\'s Full Name*:');
+    const session = sessions[userNumber];
+
+    // IMAGE/MEDIA HANDLER
+    if (msg.hasMedia) {
+        msg.reply('✅ *Attachment Received!* Logged for our team.');
+        return;
     }
-    else if (userMessage === 'contact' || userMessage === 'contact us') {
-        msg.reply('📍 *Neurology Center*\n📧 Email: contact.ssystems25@gmail.com\n📞 Phone: +91 97407 46668\nOur specialists are available Mon-Fri, 9 AM - 6 PM.');
+
+    if (session.step === 'initial') {
+        if (userMessage === '1') { session.type = 'EXISTING'; session.step = 'collect_email'; msg.reply('Welcome back! Please enter your *Email ID*:'); }
+        else if (userMessage === '2') { session.type = 'NEW'; session.step = 'collect_email'; msg.reply('Welcome! Please enter your *Email ID*:'); }
     }
-    else if (userMessage === 'developer' || userMessage === 'credits' || userMessage === 'who developed this') {
-    msg.reply('🚀 *Project Development Board*\n\n' +
-              'This Neurology Support Bot was developed by:\n' +
-              '👨‍💻 *Varad Dongare*\n' +
-              '🎓 Student at *MIT WPU, Pune*\n' +
-              '📚 Course: *BCA Science*\n\n' +
-              '© 2026 Support Systems. All rights reserved.\n' +
-              'Designed to streamline patient consultations.');
-}
+
+    else if (session.step === 'collect_email') {
+        if (userMessage.includes('@')) {
+            session.email = userMessage;
+            session.step = 'menu_selection';
+            msg.reply('Thank you! How can we help?\n\n1️⃣ Book Session\n2️⃣ Get Brochure 📄\n3️⃣ Billing Support\n4️⃣ Request Call-back\n5️⃣ Other');
+        } else {
+            msg.reply('Please enter a valid email.');
+        }
+    }
+
+    else if (session.step === 'menu_selection') {
+        if (userMessage === '2') {
+            // OPTION 2: SPECIFIC BROCHURE REQUIREMENT
+            if (fs.existsSync(BROCHURE_PATH)) {
+                const media = MessageMedia.fromFilePath(BROCHURE_PATH);
+                await client.sendMessage(userNumber, media, { caption: 'Here is our brochure! 📄' });
+                await processLead(userNumber, session.email, 'BROCHURE_ONLY', 'User requested brochure via menu', true);
+                msg.reply(`✅ *Brochure Sent!* I have also emailed a copy to ${session.email}. Do you have any other questions? (Reply below or wait for an executive)`);
+                session.step = 'collect_details'; // Move to details if they want to ask more
+            } else {
+                msg.reply('Our brochure is being updated. We will email it to you manually very soon!');
+                delete sessions[userNumber];
+            }
+        } else if (['1', '3', '4', '5'].includes(userMessage)) {
+            session.step = 'collect_details';
+            msg.reply('Please share your *Full Name* and details of your request:');
+        }
+    }
+
+    else if (session.step === 'collect_details') {
+        await processLead(userNumber, session.email, session.type, msg.body, false);
+        await client.sendMessage(MY_NUMBER, `📢 *NEW LEAD*\nUser: ${userNumber}\nEmail: ${session.email}\nDetails: ${msg.body}`);
+        msg.reply(`✅ *Recorded!* Confirmation sent to ${session.email}. Our team will reach out within 2 hours.`);
+        delete sessions[userNumber];
+    }
 });
-
-
-
-
 
 client.initialize();
