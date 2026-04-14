@@ -1,4 +1,5 @@
-Support Systems Bot
+# Support Systems Bot
+
 This is a hybrid AI automation tool designed to live on WhatsApp. Instead of just sending rigid, pre-programmed replies, it uses a dual-brain architecture to give users genuinely helpful, AI-driven conversations.
 
 Whether it is fetching a brochure or answering a complex query, this bot handles the heavy lifting so you do not have to.
@@ -29,9 +30,10 @@ Connectivity: whatsapp-web.js and FastAPI
 Tools: qrcode-terminal for logins and dotenv for environment management.
 
 Getting Started
+
 1. Grab the code
 Bash
-git clone https://github.com/varaddongare-dev/support-systems-bot.git
+git clone <https://github.com/varaddongare-dev/support-systems-bot.git>
 cd support-systems-bot
 2. Set up the Messenger (Node)
 Bash
@@ -44,7 +46,7 @@ Create a .env file in the root folder and add your API key:
 
 Code snippet
 GEMINI_API_KEY=your_actual_api_key_here
-BRAIN_URL=http://localhost:8000/process
+BRAIN_URL=<http://localhost:8000/process>
 Running the Bot
 You will need to keep two terminals open simultaneously:
 
