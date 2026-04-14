@@ -1,80 +1,72 @@
-# Support Systems Bot 🤖
+Support Systems Bot
+This is a hybrid AI automation tool designed to live on WhatsApp. Instead of just sending rigid, pre-programmed replies, it uses a dual-brain architecture to give users genuinely helpful, AI-driven conversations.
 
-An intelligent WhatsApp automation tool built with a **Hybrid Architecture** (Node.js + Python), integrated with the Google Gemini 2.0 API. This bot is designed to handle automated queries, provide AI-driven responses, and streamline support workflows.
+Whether it is fetching a brochure or answering a complex query, this bot handles the heavy lifting so you do not have to.
 
-## 🚀 Features
+Why this bot?
+Most bots are either too simple (keyword only) or too slow (pure AI). This project strikes a balance:
 
-* **AI Conversations:** Real-time intelligent chat powered by Gemini 2.0 Flash.
-* **WhatsApp Integration:** Seamless messaging via `whatsapp-web.js`.
-* **Hybrid Logic:** Core automation and session management in Node.js with specialized AI processing in Python (FastAPI).
-* **Smart Fallbacks:** Priority keyword detection for brochures and executive profiles.
-* **Secure Config:** Professional environment-based API key management.
+Real Conversations: Powered by Gemini 2.0 Flash for fast, snappy, and context-aware replies.
 
-## 🏗 System Architecture
+Smart Triggers: It knows when to be an AI and when to just hand over a PDF brochure or an executive profile.
 
-The bot operates using a dual-server setup:
+The Best of Both Worlds: We use Node.js to handle the WhatsApp connection and Python (FastAPI) to do the heavy lifting with AI processing.
 
-1. **Frontend (Node.js):** Handles the WhatsApp connection, QR scanning, and media (PDF) delivery.
-2. **Backend (Python/FastAPI):** Acts as the "Brain," processing text through Gemini and returning intent-based instructions to Node.js.
+How it Works
+The bot operates like a team of two:
 
-## 🛠 Tech Stack
+The Messenger (Node.js): Stays connected to WhatsApp, listens for messages, and handles files and QR codes.
 
-* **Languages:** JavaScript (Node.js), Python 3.10+
-* **AI Model:** Google Gemini 2.0 Flash
-* **Frameworks:** FastAPI (Python), Express (Node.js - for health checks)
-* **Key Libraries:** `whatsapp-web.js`, `qrcode-terminal`, `python-dotenv`, `google-genai`
+The Brain (Python): Receives the message, thinks about it using Gemini, and tells the Messenger exactly what to say back.
 
-## 📋 Prerequisites
+What is under the hood?
+Logic: Node.js and Python 3.10+
 
-* Node.js (v16+)
-* Python (v3.10+)
-* Gemini API Key (from [Google AI Studio](https://aistudio.google.com/))
+AI: Google Gemini 2.0 Flash API
 
-## ⚙️ Installation & Setup
+Connectivity: whatsapp-web.js and FastAPI
 
-1. **Clone the repository:**
+Tools: qrcode-terminal for logins and dotenv for environment management.
 
-   ```bash
-   git clone [https://github.com/varaddongare-dev/support-systems-bot.git](https://github.com/varaddongare-dev/support-systems-bot.git)
-   cd support-systems-bot
-
-2. **Install Node.js Dependencies:**
-
+Getting Started
+1. Grab the code
+Bash
+git clone https://github.com/varaddongare-dev/support-systems-bot.git
+cd support-systems-bot
+2. Set up the Messenger (Node)
 Bash
 npm install
-
-3. **Install Python Dependencies:**
-
+3. Set up the Brain (Python)
 Bash
 pip install -r requirements.txt
+4. Configuration
+Create a .env file in the root folder and add your API key:
 
-4. **Configure Environment Variables:**
-Create a .env file in the root directory:
-
-Code snippet:
+Code snippet
 GEMINI_API_KEY=your_actual_api_key_here
 BRAIN_URL=http://localhost:8000/process
+Running the Bot
+You will need to keep two terminals open simultaneously:
 
-# Optional: CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.ex
-
-🏃 Run the Bot
-You will need two terminals open:
-
-Terminal 1 (Python Brain):
+Terminal 1 (The Brain):
 
 Bash
 python main.py
-Terminal 2 (WhatsApp Client):
+Terminal 2 (The Messenger):
 
 Bash
 node index.js
-🚧 Roadmap
-[ ] Refine Gemini system instructions for better medical/support empathy.
+Once both are running, scan the QR code that appears in your terminal with your WhatsApp linked devices to begin.
 
-[ ] Complete automated email notification integration.
+Roadmap
+Building is never finished. Here is what is currently in development:
 
-[ ] Implement a database (MongoDB/PostgreSQL) for long-term session memory.
+[ ] Empathy Tuning: Fine-tuning Gemini to handle sensitive support queries with more care.
 
-[ ] Multi-document support (PDF analysis).
+[ ] Long-term Memory: Adding a database (MongoDB or Postgres) so the bot remembers user context over time.
 
-Developed by Varad Dongare MIT World Peace University, Pune
+[ ] Document Intelligence: Allowing the bot to analyze PDFs to answer specific questions.
+
+[ ] Email Alerts: Automatically notifying a human when an issue requires manual intervention.
+
+Developed by Varad Dongare
