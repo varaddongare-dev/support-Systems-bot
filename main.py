@@ -11,7 +11,8 @@ load_dotenv()
 app = FastAPI()
 
 # 1. SETUP THE GEMINI
-# It now looks for GEMINI_API_KEY inside your .env file
+# Created an .env file for api_key used for the bot.
+
 api_key_env = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key_env)
 
