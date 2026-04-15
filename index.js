@@ -3,16 +3,13 @@ const qrcode = require('qrcode-terminal');
 const fs = require('fs'); 
 const axios = require('axios');
 const path = require('path'); 
-require('dotenv').config(); // ✅ Access to the .env file 
+require('dotenv').config(); 
 
 // 1. SETTINGS ⚙️
 const TIMEOUT_DURATION = 10 * 60 * 1000; 
-
-// ✅ Uses Render URL from .env if it exists, otherwise defaults to localhost
 const BRAIN_URL = process.env.BRAIN_URL || 'http://localhost:8000/process'; 
 const COPYRIGHT = "\n\n© Support Systems 2026 All Rights Reserved.";
 
-// ✅ Dynamic Paths (Works on both Windows and Linux/Render)
 const PATHS = {
     BROCHURE: path.join(__dirname, 'Brochure.pdf'),
     EXECUTIVES: path.join(__dirname, 'Psychologist Brochure.pdf'),
@@ -25,7 +22,6 @@ const client = new Client({
     puppeteer: {
         headless: true, 
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        // ✅ Only uses hardcoded Chrome path if provided in .env
         executablePath: process.env.CHROME_PATH || undefined 
     }
 });
@@ -49,13 +45,16 @@ client.on('message', async (msg) => {
         return;
     }
 
+    // --- WEBSITE BUTTON DETECTION ---
+    // This checks if the message contains keywords from your "Tell us more" website buttons
+    const websiteKeywords = ['confused', 'therapist', 'experience', 'unsure', 'medication'];
+    const isWebsiteQuestion = websiteKeywords.some(word => userMessageLower.includes(word));
     const isGreeting = ['hi', 'hello', 'hey'].includes(userMessageLower);
 
     // 2. GREETING LOGIC
-    if (!sessions[userNumber] || isGreeting) {
-        if (sessions[userNumber]?.greeted && !isGreeting) return;
-
-        console.log(`[FLOW] Sending Greeting...`);
+    // If it's a first message and NOT a website button, send the standard greeting
+    if (!sessions[userNumber] && isGreeting) {
+        console.log(`[FLOW] Sending Standard Greeting...`);
         sessions[userNumber] = { step: 'awaiting_query', greeted: true };
         
         sessions[userNumber].timeout = setTimeout(() => { 
@@ -65,6 +64,12 @@ client.on('message', async (msg) => {
         const greeting = `Thank you for contacting *Support Systems*.\n\nPlease drop in your queries and we will get back to you soon as possible.\n\nWe look forward to speaking with you!\n\nBest Regards\n\nSupport Systems. ✨${COPYRIGHT}`;
         await msg.reply(greeting);
         return;
+    }
+
+    // If it's a website question and a new session, initialize the session but SKIP the greeting
+    if (!sessions[userNumber] && isWebsiteQuestion) {
+        console.log(`[FLOW] Website Redirect detected. Skipping greeting for direct answer.`);
+        sessions[userNumber] = { step: 'awaiting_query', greeted: true };
     }
 
     // 3. PYTHON BRAIN CALL
@@ -89,6 +94,7 @@ client.on('message', async (msg) => {
             }
         } else {
             await msg.reply(finalReply);
+            // Mark handled so the bot doesn't keep responding to "Thank you" etc.
             if (sessions[userNumber]) {
                 sessions[userNumber].step = 'handled'; 
             }
@@ -96,7 +102,6 @@ client.on('message', async (msg) => {
 
     } catch (error) {
         console.error(`[ERROR] Brain Offline: ${error.message}`);
-        
         const fallback = `We have noted your response.\n\nWe will connect you to the right person at the earliest.\n\nHave a great day! ✨${COPYRIGHT}`;
         await msg.reply(fallback);
         
