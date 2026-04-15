@@ -1,18 +1,19 @@
 import os
 from fastapi import FastAPI
 from pydantic import BaseModel
-from google import genai
-from dotenv import load_dotenv
+from google import genai 
 import uvicorn
+from dotenv import load_dotenv
 
-# Load variables from .env
+# Load variables from .env file
 load_dotenv()
 
 app = FastAPI()
 
-# 1. SETUP THE GEMINI
-api_key_env = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=api_key_env)
+# 1. SETUP GEMINI CLIENT 
+# It now looks for GEMINI_API_KEY in your .env file
+api_key = os.getenv("GEMINI_API_KEY")
+client = genai.Client(api_key=api_key)
 
 class UserMsg(BaseModel):
     message: str
@@ -21,69 +22,47 @@ class UserMsg(BaseModel):
 async def process_message(data: UserMsg):
     text = data.message.lower()
     
-    # 2. WEBSITE BUTTON LOGIC (Manual Priority Checks)
-    # We check these FIRST to ensure the brand voice matches your image exactly.
+    # --- WEBSITE BUTTON LOGIC (Direct Empathy) ---
+    if "confused" in text or "choose" in text or "trust" in text:
+        return {"intent": "QUERY", "reply": "Choosing the right therapist is a deeply personal step, and it's completely normal to feel unsure. At Support Systems, we match you with professionals who prioritize your safety and trust. Would you like to see our executive profiles to help you decide?"}
 
-    # Button 1: Confused about therapist
-    if "confused" in text and "therapist" in text:
-        reply = (
-            "Trust me, we understand that it can be overwhelming and difficult. "
-            "So, let us take care of it for you! A Support Systems executive will "
-            "reach out shortly to help you find the perfect match."
-        )
-        return {"intent": "SUPPORT", "reply": reply}
+    if "didn't feel right" in text or "tried therapy" in text:
+        return {"intent": "QUERY", "reply": "I'm sorry to hear your previous experience wasn't ideal. Therapy is all about the 'click' between you and the professional. We’d love to help you find a better fit within the Support Systems network."}
 
-    # Button 2: Bad experience
-    if "bad experience" in text:
-        reply = (
-            "We're sorry you had to go through that. This happens more often than "
-            "you think. We're here to get you the right person and ensure your "
-            "journey with Support Systems is supportive and safe."
-        )
-        return {"intent": "SUPPORT", "reply": reply}
+    if "medication" in text or "both" in text:
+        return {"intent": "QUERY", "reply": "That is a very important question. Whether you need talk therapy, medical support, or a combination of both depends on your unique journey. We can schedule a preliminary consultation to help clarify the best path for you."}
 
-    # Button 3: Unsure/Medication
-    if "unsure" in text or "medication" in text:
-        reply = (
-            "It's a fair confusion! Let's figure it out together. Our team will "
-            "connect with you soon to help guide you through the best path for your healing."
-        )
-        return {"intent": "SUPPORT", "reply": reply}
+    if "judgement free" in text or "talk to somebody" in text or "feelings" in text:
+        return {"intent": "QUERY", "reply": "Everyone deserves a safe space to be heard without being judged. Our psychologists at Support Systems are here to listen and support you through whatever you are feeling right now."}
 
-    # 3. AI LOGIC: For any other general queries
+    if "understand yourself" in text or "better" in text:
+        return {"intent": "QUERY", "reply": "Self-discovery is a powerful journey. We can provide the tools and professional guidance to help you navigate your thoughts and understand yourself on a deeper level."}
+
+    # --- STANDARD KEYWORDS ---
+    if "brochure" in text:
+        return {"intent": "BROCHURE", "reply": "I'm sending the Support Systems brochure to you right now! ✨"}
+    
+    if any(word in text for word in ["doctor", "executive", "profile"]):
+        return {"intent": "EXECUTIVES", "reply": "Sharing our Psychologist and Executive profiles with you. ✨"}
+
+    # --- GENERAL AI FALLBACK ---
     try:
-        if not api_key_env:
-            raise Exception("Gemini API Key missing!")
-
-        print(f"🤖 Processing general query: {data.message}")
-        
         response = client.models.generate_content(
             model="gemini-2.0-flash", 
             contents=data.message,
             config={
                 "system_instruction": (
                     "You are the official AI assistant for 'Support Systems'. "
-                    "Your tone is professional, empathetic, and judgement-free. "
-                    "If a user asks about choosing a therapist or bad experiences, "
-                    "reassure them that Support Systems is here to find the right fit. "
-                    "Keep responses under 3 sentences and always end with: 'We're here for you.'"
+                    "Be professional, empathetic, and brief. Mention 'Support Systems' "
+                    "and keep responses under 3 sentences."
                 )
             }
         )
-        
-        ai_reply = response.text if response.text else "We've noted your message. An executive will get back to you soon. We're here for you."
-        
-        return {"intent": "QUERY", "reply": ai_reply}
+        return {"intent": "QUERY", "reply": response.text}
         
     except Exception as e:
-        print(f"❌ Error: {e}")
-        return {
-            "intent": "QUERY", 
-            "reply": "Thank you for reaching out to Support Systems. An executive will assist you shortly. We're here for you."
-        }
+        print(f"❌ Gemini Error: {e}")
+        return {"intent": "QUERY", "reply": "I've noted your message. An executive from Support Systems will get back to you soon. ✨"}
 
-# 4. START THE SERVER
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    print(f"🚀 Python Brain is starting on port {port}...")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
