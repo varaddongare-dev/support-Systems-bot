@@ -53,7 +53,7 @@ client.on('message', async (msg) => {
 
     // Guards
     if (msg.fromMe || userNumber === BOT_NUMBER || userNumber.includes('@g.us')) return;
-    if (sessions[userNumber]?.step === 'handled') return;
+    if (sessions[userNumber]?.step === 'processing') return;
 
     console.log(`\n📩 Incoming from ${userNumber}: "${userMessage}"`);
 
@@ -74,6 +74,7 @@ client.on('message', async (msg) => {
 
     // 4. API CALL TO PYTHON
     try {
+        sessions[userNumber].step = 'processing';
         const response = await axios.post(BRAIN_URL, { message: userMessage });
         const { intent, reply } = response.data;
         const finalReply = reply + COPYRIGHT;
@@ -96,14 +97,12 @@ client.on('message', async (msg) => {
             await msg.reply(finalReply);
         }
         
-        if (sessions[userNumber]) {
-            sessions[userNumber].step = 'handled';
-        }
+        sessions[userNumber].step ='ready';
 
     } catch (error) {
         console.error(`[ERROR] Brain Offline: ${error.message}`);
         await msg.reply(`We have noted your response. An executive will connect with you shortly. ✨${COPYRIGHT}`);
-        if (sessions[userNumber]) sessions[userNumber].step = 'handled';
+       sessions[userNumber].step = 'ready';
     }
 });
 
