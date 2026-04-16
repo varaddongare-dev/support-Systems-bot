@@ -9,6 +9,7 @@
   "dependencies": {
     "axios": "^1.15.0",
     "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
     "express": "^4.22.1",
     "puppeteer": "latest",
     "qrcode-terminal": "^0.12.0",

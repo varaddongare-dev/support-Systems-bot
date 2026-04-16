@@ -3,6 +3,7 @@ const qrcode = require('qrcode-terminal');
 const fs = require('fs'); 
 const axios = require('axios');
 const path = require('path'); 
+const ExcelJS = require('exceljs');
 require('dotenv').config(); 
 
 // 1. SETTINGS ⚙️
@@ -19,7 +20,40 @@ const PATHS = {
 
 const sessions = {}; 
 
-// 2. CLIENT SETUP
+//2. EXCEL LOGGER LOGIC.
+async function logtoExcel(user,message,intent) {
+    const fileName = 'Leads_Reports.xlsx';
+    const workbook = new ExcelJS.Workbook();
+    let worksheet;
+
+    try{
+        if(fs.existsSync(fileName)) {
+            await workbook.xlsx.readFile(fileName);
+            worksheet = workbook.getWorksheet('Leads');
+        } else {
+            worksheet = workbook.addWorksheet('Leads');
+            worksheet.columns = [
+                {header:'Date & Time' , key: 'timestamp', width:25},
+                {header:'Phone Number', key: 'timestamp', width:20},
+                {header:'User Message', key: 'msg', width:40},
+                {header:'Detected Intent', key:'intent', width:15}
+            ];
+        }
+    worksheet.addRow({
+        timestamp: new Date().toLocaleString(),
+        user: user.replace('@c.us',""),
+        msg: message,
+        intent: intent
+});
+
+await workbook.xlsx.writeFile(fileName);
+console.log(`✅ Data Logged to Excel for ${user}`);
+} catch(err){
+    console.error(`❌ Excel Logging Failed: ${err.message}`);
+}
+}
+
+// 3. CLIENT SETUP
 const client = new Client({
     authStrategy: new LocalAuth({ 
         clientId: "support-systems-session" 
@@ -79,6 +113,12 @@ client.on('message', async (msg) => {
         const { intent, reply } = response.data;
         const finalReply = reply + COPYRIGHT;
 
+        if(sessions[userNumber].timeout) {
+            clearTimeout(sessions[userNumber].timeout);
+        }
+
+        await logtoExcel(userNumber, userMessage, intent);
+// Send Reply and Attachments based on Intent.
         if (intent === 'BROCHURE') {
             await msg.reply(finalReply);
             if (fs.existsSync(PATHS.BROCHURE)) {
