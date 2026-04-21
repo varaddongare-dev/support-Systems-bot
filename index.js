@@ -12,7 +12,7 @@ const TIMEOUT_DURATION = 10 * 60 * 1000;
 const BRAIN_URL = process.env.BRAIN_URL || 'http://localhost:8000/process'; 
 const COPYRIGHT = "\n\n© Support Systems 2026 All Rights Reserved.";
 
-// ✅ Updated Paths to be dynamic based on your new folder
+// updated paths based on folder for each pdf's.
 const PATHS = {
     BROCHURE: path.join(__dirname, 'Brochure.pdf'),
     EXECUTIVES: path.join(__dirname, 'Psychologist Brochure.pdf'),
