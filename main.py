@@ -18,43 +18,41 @@ class UserMsg(BaseModel):
 
 @app.post("/process")
 async def process_message(data: UserMsg):
-    text = data.message.strip() # Exact match works better for website buttons
-    text_lower = text.lower()
-    
-    # --- WEBSITE BUTTON LOGIC (Your Exact Replies) ---
-    
-    # 1. Choice/Trust Confusion
-    if "confused about which therapist" in text_lower:
-        return {"intent": "QUERY", "reply": "Trust me, we understand that it can be overwhelming and difficult. So, let us take care of it for you. Our team will get in touch with you shortly. We’re here for you."}
+    # 1. Capture and Normalize
+    raw_message = data.message if data.message else ""
+    text_lower = raw_message.lower().strip()
 
-    # 2. Previous Bad Experience
-    if "didn't feel right" in text_lower:
-        return {"intent": "QUERY", "reply": "We’re sorry you had to go through that, this happens more often than you think—that’s why we’re here to get you the right person for you. Our team will get in touch with you shortly. We’re here for you."}
+    print(f"Received message: {raw_message}")
 
-    # 3. Therapy vs Medication
-    if "therapy, medication, or both" in text_lower:
-        return {"intent": "QUERY", "reply": "It’s a fair confusion, let’s figure it out together. Our team will get in touch with you shortly. We’re here for you."}
+    # 2. --- WEBSITE BUTTON LOGIC ---
+    # Each 'if' must be followed by a 'return' indented further in
+    if "felt confused" in text_lower or "choose" in text_lower:
+        return {"intent": "QUERY", "reply": "I have felt confused about which therapist to choose"}
 
-    # 4. Talk / Judgement Free
-    if "judgement free" in text_lower:
-        return {"intent": "QUERY", "reply": "We’re glad you reached out! Our team will get in touch with you shortly. We’re here for you."}
+    if "tried therapy" in text_lower or "didn't feel right" in text_lower:
+        return {"intent": "QUERY", "reply": "I have tried therapy but it didn’t feel right for me"}
 
-    # 5. Understand yourself better
-    if "understand yourself better" in text_lower:
-        return {"intent": "QUERY", "reply": "Self-awareness is the first step toward growth. Our team will get in touch with you shortly to help you navigate this journey. We’re here for you."}
+    if "not sure" in text_lower or "medication" in text_lower:
+        return {"intent": "QUERY", "reply": "I don’t know if I need therapy, medication or both"}
 
-    # --- STANDARD KEYWORDS ---
+    if "talk to somebody" in text_lower or "judgement free" in text_lower:
+        return {"intent": "QUERY", "reply": "I have felt the need talk to someone judgement free"}
+
+    if "understand myself better" in text_lower:
+        return {"intent": "QUERY", "reply": "I want to understand myself better."}
+
+    # 3. --- FILE REQUEST LOGIC ---
     if "brochure" in text_lower:
         return {"intent": "BROCHURE", "reply": "I'm sending the Support Systems brochure to you right now! ✨"}
     
     if any(word in text_lower for word in ["doctor", "executive", "profile"]):
         return {"intent": "EXECUTIVES", "reply": "Sharing our Psychologist and Executive profiles with you. ✨"}
 
-    # --- GENERAL AI FALLBACK ---
+    # 4. --- GENERAL AI FALLBACK ---
     try:
         response = client.models.generate_content(
             model="gemini-2.0-flash", 
-            contents=data.message,
+            contents=raw_message,
             config={
                 "system_instruction": (
                     "You are the official AI assistant for 'Support Systems'. "
