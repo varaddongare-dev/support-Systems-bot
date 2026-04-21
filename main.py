@@ -25,7 +25,7 @@ async def process_message(data: UserMsg):
     print(f"Received message: {raw_message}")
 
     # 2. --- WEBSITE BUTTON LOGIC ---
-    # Each 'if' must be followed by a 'return' indented further in
+ 
     if "felt confused" in text_lower or "choose" in text_lower:
         return {"intent": "QUERY", "reply": "I have felt confused about which therapist to choose"}
 
