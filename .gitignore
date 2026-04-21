@@ -1,4 +1,16 @@
+# WhatsApp Bot Assets
+*.pdf
+Lead_Reports.xlsx
+
+# Session & Auth Data
+.wwebjs_auth/
+.wwebjs_cache/
+session/
+
+# Environment Secrets
+.env
+
+# Dependencies
 node_modules/
-.wwebjs_auth
-.wwebjs_cache
-.env 
+__pycache__/
+.venv/
