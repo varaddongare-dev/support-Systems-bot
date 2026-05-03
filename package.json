@@ -1,0 +1,18 @@
+{
+  "name": "support-systems-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.15.0",
+    "dotenv": "^17.4.2",
+    "exceljs": "^3.4.0",
+    "express": "^4.22.1",
+    "puppeteer": "latest",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.34.6"
+  }
+}
