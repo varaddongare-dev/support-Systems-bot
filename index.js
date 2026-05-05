@@ -1,107 +1,148 @@
-const express = require('express');
-const app = express();
-
-
-const port = process.env.PORT || 8080; // This lets Render choose the port
-
-app.get('/', (req, res) => res.send('Bot is running'));
-
-app.listen(port, '0.0.0.0', () => {
-    console.log(`Server on port ${port}`);
-});
-
-
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
+const fs = require('fs'); 
+const axios = require('axios');
+const path = require('path'); 
+const ExcelJS = require('exceljs');
+require('dotenv').config(); 
 
-const MY_NUMBER = process.env.MY_NUMBER || '918433750502'; 
+// 1. SETTINGS ⚙️
+const BOT_NUMBER = '919740746668@c.us'; 
+const TIMEOUT_DURATION = 10 * 60 * 1000; 
+const BRAIN_URL = process.env.BRAIN_URL || 'http://localhost:8000/process'; 
+const COPYRIGHT = "\n\n© Support Systems 2026 All Rights Reserved.";
 
-const appointmentSessions = {};
+// updated paths based on folder for each pdf's.
+const PATHS = {
+    BROCHURE: path.join(__dirname, 'Brochure.pdf'),
+    EXECUTIVES: path.join(__dirname, 'Psychologist Brochure.pdf'),
+};
 
-const client = new Client({
-    authStrategy: new LocalAuth(),
-    puppeteer: {
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        executablePath: '/opt/render/.cache/puppeteer/chrome/linux-145.0.7632.77/chrome-linux64/chrome'
-    }
-});
+const sessions = {}; 
 
+//2. EXCEL LOGGER LOGIC.
+async function logtoExcel(user,message,intent) {
+    const fileName = 'Leads_Reports.xlsx';
+    const workbook = new ExcelJS.Workbook();
+    let worksheet;
 
-client.on('qr', (qr) => {
-    console.log('CLICK THIS FOR A PERFECT QR CODE:');
-    console.log(`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qr)}&size=300x300`);
-    qrcode.generate(qr, {small: true});
-});
-client.on('ready', () => {
-    console.log(`\nSUCCESS: Neurology Support Bot is active on ${MY_NUMBER}!`);
-});
-
-client.on('message', async (msg) => {
-    const contact = msg.from;
-    const userMessage = msg.body.toLowerCase();
-    const originalMessage = msg.body;
-
-    
-    if (appointmentSessions[contact]) {
-        const session = appointmentSessions[contact];
-
-        if (session.step === 'awaiting_name') {
-            session.name = originalMessage;
-            session.step = 'awaiting_phone';
-            msg.reply(`Thank you, ${session.name}. Please provide a contact phone number so our medical team can reach you:`);
-        } 
-        else if (session.step === 'awaiting_phone') {
-            session.phone = originalMessage;
-            session.step = 'awaiting_date';
-            msg.reply('What date and time would you like to request for your consultation?');
+    try{
+        if(fs.existsSync(fileName)) {
+            await workbook.xlsx.readFile(fileName);
+            worksheet = workbook.getWorksheet('Leads');
+        } else {
+            worksheet = workbook.addWorksheet('Leads');
+            worksheet.columns = [
+                {header:'Date & Time' , key: 'timestamp', width:25},
+                {header:'Phone Number', key: 'timestamp', width:20},
+                {header:'User Message', key: 'msg', width:40},
+                {header:'Detected Intent', key:'intent', width:15}
+            ];
         }
-        else if (session.step === 'awaiting_date') {
-            session.date = originalMessage;
-            session.step = 'awaiting_reason';
-            msg.reply('Could you briefly describe the symptoms or reason for the visit? (This helps us prepare for your care)');
-        } 
-        else if (session.step === 'awaiting_reason') {
-            session.reason = originalMessage;
-            
-            const summary = `*✅ Consultation Request Received* \n\n` +
-                            `👤 *Patient Name:* ${session.name}\n` +
-                            `📞 *Contact Number:* ${session.phone}\n` +
-                            `📅 *Requested Date:* ${session.date}\n` +
-                            `📝 *Notes:* ${session.reason}\n\n` +
-                            `Our neurology specialists will review your request and contact you shortly to confirm the appointment. If this is a medical emergency, please visit the nearest hospital immediately.`;
-            
-            msg.reply(summary);
-            console.log(`NEW NEUROLOGY BOOKING: ${session.name} - ${session.phone}`);
-            delete appointmentSessions[contact];
-        }
-        return; 
-    }
+    worksheet.addRow({
+        timestamp: new Date().toLocaleString(),
+        user: user.replace('@c.us',""),
+        msg: message,
+        intent: intent
+});
 
-    
-    if (userMessage === 'hi' || userMessage === 'hello') {
-        msg.reply('Welcome to Support Systems Neurology. We are here to assist you with brain health and recovery. How can we help you today?');
-    } 
-    else if (userMessage === 'book appointment' || userMessage === 'book an appointment') {
-        appointmentSessions[contact] = { step: 'awaiting_name' };
-        msg.reply('To book a consultation, please start by providing the *Patient\'s Full Name*:');
-    }
-    else if (userMessage === 'contact' || userMessage === 'contact us') {
-        msg.reply('📍 *Neurology Center*\n📧 Email: contact.ssystems25@gmail.com\n📞 Phone: +91 97407 46668\nOur specialists are available Mon-Fri, 9 AM - 6 PM.');
-    }
-    else if (userMessage === 'developer' || userMessage === 'credits' || userMessage === 'who developed this') {
-    msg.reply('🚀 *Project Development Board*\n\n' +
-              'This Neurology Support Bot was developed by:\n' +
-              '👨‍💻 *Varad Dongare*\n' +
-              '🎓 Student at *MIT WPU, Pune*\n' +
-              '📚 Course: *BCA Science*\n\n' +
-              '© 2026 Support Systems. All rights reserved.\n' +
-              'Designed to streamline patient consultations.');
+await workbook.xlsx.writeFile(fileName);
+console.log(`✅ Data Logged to Excel for ${user}`);
+} catch(err){
+    console.error(`❌ Excel Logging Failed: ${err.message}`);
 }
+}
+
+// 3. CLIENT SETUP
+const client = new Client({
+    authStrategy: new LocalAuth({ 
+        clientId: "support-systems-session" 
+    }),
+    puppeteer: {
+        headless: true, // Keep this false until you successfully link
+        args: [
+            '--no-sandbox', 
+            '--disable-setuid-sandbox',
+            
+        ],
+        executablePath: 'C:\Program Files\Google\Chrome\Application\chrome.exe' 
+    }
 });
 
+client.on('qr', (qr) => { 
+    console.log('✨ Scan the QR code in the Chrome window:');
+    qrcode.generate(qr, { small: true }); 
+});
 
+client.on('ready', () => { 
+    console.log('\n🚀 Support Systems Bot is Online.'); 
+});
 
+// 3. CORE LOGIC
+client.on('message', async (msg) => {
+    const userNumber = msg.from;
+    const userMessage = msg.body.trim();
+    const userMessageLower = userMessage.toLowerCase();
 
+    // Guards
+    if (msg.fromMe || userNumber === BOT_NUMBER || userNumber.includes('@g.us')) return;
+    if (sessions[userNumber]?.step === 'processing') return;
+
+    console.log(`\n📩 Incoming from ${userNumber}: "${userMessage}"`);
+
+    const websiteKeywords = ['confused', 'therapist', 'experience', 'unsure', 'medication'];
+    const isWebsiteQuestion = websiteKeywords.some(word => userMessageLower.includes(word));
+    const isGreeting = ['hi', 'hello', 'hey'].includes(userMessageLower);
+
+    if (!sessions[userNumber]) {
+        if (isGreeting) {
+            sessions[userNumber] = { step: 'awaiting_query', greeted: true };
+            const greeting = `Thank you for contacting *Support Systems*.\n\nPlease drop in your queries and we will get back to you as soon as possible. ✨${COPYRIGHT}`;
+            await msg.reply(greeting);
+            sessions[userNumber].timeout = setTimeout(() => { delete sessions[userNumber]; }, TIMEOUT_DURATION);
+            return;
+        }
+        sessions[userNumber] = { step: 'processing', greeted: true };
+    }
+
+    // 4. API CALL TO PYTHON
+    try {
+        sessions[userNumber].step = 'processing';
+        const response = await axios.post(BRAIN_URL, { message: userMessage });
+        const { intent, reply } = response.data;
+        const finalReply = reply + COPYRIGHT;
+
+        if(sessions[userNumber].timeout) {
+            clearTimeout(sessions[userNumber].timeout);
+        }
+
+        await logtoExcel(userNumber, userMessage, intent);
+// Send Reply and Attachments based on Intent.
+        if (intent === 'BROCHURE') {
+            await msg.reply(finalReply);
+            if (fs.existsSync(PATHS.BROCHURE)) {
+                await client.sendMessage(userNumber, MessageMedia.fromFilePath(PATHS.BROCHURE));
+            } else {
+                console.error(`❌ File missing: ${PATHS.BROCHURE}`);
+            }
+        } else if (intent === 'EXECUTIVES') {
+            await msg.reply(finalReply);
+            if (fs.existsSync(PATHS.EXECUTIVES)) {
+                await client.sendMessage(userNumber, MessageMedia.fromFilePath(PATHS.EXECUTIVES));
+            } else {
+                console.error(`❌ File missing: ${PATHS.EXECUTIVES}`);
+            }
+        } else {
+            await msg.reply(finalReply);
+        }
+        
+        sessions[userNumber].step ='ready';
+
+    } catch (error) {
+        console.error(`[ERROR] Brain Offline: ${error.message}`);
+        await msg.reply(`We have noted your response. An executive will connect with you shortly. ✨${COPYRIGHT}`);
+       sessions[userNumber].step = 'ready';
+    }
+});
 
 client.initialize();
