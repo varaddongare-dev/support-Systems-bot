@@ -5,7 +5,7 @@ from google import genai
 import uvicorn
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv("Api_Key.env")
 
 app = FastAPI()
 
