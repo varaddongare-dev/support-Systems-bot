@@ -19,3 +19,6 @@ Api_Key.env
 
 node_modules/
 __pycache__/
+
+# Todo lists
+TODO.md
