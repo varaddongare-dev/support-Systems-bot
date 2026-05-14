@@ -65,9 +65,9 @@ Building is never finished. Here is what is currently in development:
 
 [ ] Empathy Tuning: Fine-tuning Gemini to handle sensitive support queries with more care.
 
-[ ] Long-term Memory: Adding a database (MongoDB or Postgres) so the bot remembers user context over time.
+[x] Long-term Memory: Adding a database (MongoDB or Postgres) so the bot remembers user context over time.
 
-[ ] Document Intelligence: Allowing the bot to analyze PDFs to answer specific questions.
+[x] Document Intelligence: Allowing the bot to analyze PDFs to answer specific questions.
 
 [ ] Email Alerts: Automatically notifying a human when an issue requires manual intervention.
 
