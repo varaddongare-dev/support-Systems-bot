@@ -9,9 +9,13 @@ session/
 
 # Environment Secrets
 .venv/
+.venv/
+*.env
+.env
 Api_Key.env
 
 
 # Dependencies
+
 node_modules/
 __pycache__/

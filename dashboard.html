@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support Systems — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{--cyan:#00f5d4;--violet:#8b5cf6;--cyan-dim:rgba(0,245,212,0.1);--bg:#05080f;--surface:rgba(8,12,28,0.88);--border:rgba(0,245,212,0.2);--text:#e8f4f0;--muted:#4a7068;color-scheme:dark;}
+    html,body{height:100%;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
+
+    /* ── Neural network canvas ── */
+    #c-neural{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+    /* ── Layout ── */
+    .page{position:relative;z-index:3;min-height:100vh;padding:1.4rem 1rem 3rem;}
+    .inner{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:1.3rem;}
+
+    /* ── Glass ── */
+    .glass{background:var(--surface);border:1px solid var(--border);border-radius:18px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 8px 40px rgba(0,0,0,0.7),inset 0 1px 0 rgba(0,245,212,0.06);position:relative;overflow:hidden;}
+    /* Circuit trace top highlight */
+    .glass::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 5%,rgba(0,245,212,0.7) 30%,rgba(139,92,246,0.4) 70%,transparent 95%);animation:tracePulse 3s ease-in-out infinite alternate;}
+    @keyframes tracePulse{from{opacity:0.3;}to{opacity:1;}}
+
+    /* ── Entrance ── */
+    .fu{opacity:0;transform:translateY(20px);animation:fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards;}
+    @keyframes fadeUp{to{opacity:1;transform:translateY(0);}}
+    .d1{animation-delay:0.04s;}.d2{animation-delay:0.12s;}.d3{animation-delay:0.2s;}.d4{animation-delay:0.28s;}.d5{animation-delay:0.38s;}
+
+    /* ── Header ── */
+    .hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.4rem;}
+    .logo-row{display:flex;align-items:center;gap:0.9rem;}
+    .logo-icon{width:44px;height:44px;border-radius:12px;background:var(--cyan-dim);border:1px solid rgba(0,245,212,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:iconPulse 2.5s ease-in-out infinite;}
+    @keyframes iconPulse{0%,100%{box-shadow:0 0 8px rgba(0,245,212,0.3);}50%{box-shadow:0 0 24px rgba(0,245,212,0.8),inset 0 0 14px rgba(0,245,212,0.12);}}
+    .logo-icon svg{color:var(--cyan);}
+    .logo-txt h1{font-size:1.2rem;font-weight:700;letter-spacing:-0.025em;color:var(--text);}
+    .logo-txt p{font-size:0.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+    .hdr-right{display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap;}
+
+    /* Live clock */
+    #liveClock{font-size:0.74rem;color:var(--cyan);font-family:'JetBrains Mono',monospace;padding:0.36rem 0.85rem;border-radius:8px;border:1px solid rgba(0,245,212,0.15);background:rgba(0,0,0,0.3);letter-spacing:0.05em;}
+
+    /* Radar ping status */
+    .status-wrap{position:relative;display:none;align-items:center;gap:0.5rem;padding:0.4rem 0.95rem;border-radius:999px;font-size:0.77rem;font-weight:500;}
+    .status-wrap.show{display:flex;}
+    .s-online{border:1px solid rgba(0,245,212,0.3);background:rgba(0,245,212,0.07);color:#80fff5;}
+    .s-offline{border:1px solid rgba(255,80,80,0.3);background:rgba(255,80,80,0.07);color:#ffb0b0;}
+    .radar{position:relative;width:14px;height:14px;flex-shrink:0;}
+    .radar-dot{position:absolute;inset:3px;border-radius:50%;background:var(--cyan);}
+    .radar-ring{position:absolute;inset:0;border-radius:50%;border:1px solid var(--cyan);animation:radarPing 1.8s ease-out infinite;}
+    @keyframes radarPing{0%{transform:scale(0.6);opacity:1;}100%{transform:scale(2.2);opacity:0;}}
+    .dot-r{width:8px;height:8px;border-radius:50%;background:#ff5f5f;flex-shrink:0;}
+
+    .btn-out{display:flex;align-items:center;gap:0.4rem;padding:0.38rem 0.85rem;border-radius:9px;border:1px solid rgba(255,80,80,0.25);background:rgba(255,50,50,0.06);color:#ffb0b0;font-size:0.76rem;font-weight:500;font-family:inherit;cursor:pointer;transition:background 0.2s,border-color 0.2s;}
+    .btn-out:hover{background:rgba(255,50,50,0.15);border-color:rgba(255,80,80,0.5);}
+
+    /* ── Stats ── */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.2rem;}
+    .stat-card{padding:1.4rem 1.5rem;display:flex;align-items:center;gap:1.1rem;cursor:default;transition:transform 0.2s,box-shadow 0.2s;}
+    .stat-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,0.65),0 0 28px rgba(0,245,212,0.07);}
+    .stat-ico{width:50px;height:50px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--cyan-dim);border:1px solid rgba(0,245,212,0.2);transition:box-shadow 0.3s;}
+    .stat-card:hover .stat-ico{box-shadow:0 0 20px rgba(0,245,212,0.4);}
+    .stat-ico svg{color:var(--cyan);}
+    .stat-lbl{font-size:0.73rem;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;}
+    .stat-val{font-size:2.2rem;font-weight:700;letter-spacing:-0.04em;background:linear-gradient(120deg,#fff 20%,var(--cyan) 60%,var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;margin-top:0.1rem;font-family:'JetBrains Mono',monospace;}
+    /* mini waveform */
+    .waveform{margin-top:0.85rem;height:32px;display:flex;align-items:flex-end;gap:2px;}
+    .wav-bar{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(to top,rgba(0,245,212,0.55),rgba(139,92,246,0.35));min-height:6px;transition:height 0.5s cubic-bezier(0.22,1,0.36,1);}
+    /* idle pulse so bars always visible */
+    .wav-bar{animation:wavIdle 1.8s ease-in-out infinite alternate;}
+    @keyframes wavIdle{from{opacity:0.45;filter:brightness(0.8);}to{opacity:0.95;filter:brightness(1.3);}}
+
+    @keyframes flashCard{0%{background:rgba(0,245,212,0.1);}50%{background:rgba(139,92,246,0.07);}100%{background:transparent;}}
+    .flash{animation:flashCard 0.8s ease;}
+
+    /* ── Terminal ── */
+    .term-wrap{padding:1.4rem 1.5rem;display:flex;flex-direction:column;gap:1rem;}
+    .term-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+    .term-title-row{display:flex;align-items:center;gap:0.75rem;}
+    .term-ico{width:38px;height:38px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--cyan-dim);border:1px solid rgba(0,245,212,0.18);}
+    .term-ico svg{color:var(--cyan);}
+    .term-info h2{font-size:1.05rem;font-weight:600;}
+    .term-info p{font-size:0.72rem;color:var(--muted);margin-top:1px;font-family:'JetBrains Mono',monospace;}
+    .cnt-badge{font-size:0.7rem;color:var(--muted);padding:0.28rem 0.7rem;border-radius:999px;border:1px solid rgba(0,245,212,0.1);background:rgba(0,0,0,0.3);font-family:'JetBrains Mono',monospace;}
+
+    .term-win{border-radius:13px;border:1px solid rgba(0,245,212,0.1);background:rgba(0,0,0,0.5);overflow:hidden;}
+    .term-bar{display:flex;align-items:center;justify-content:space-between;padding:0.5rem 1rem;border-bottom:1px solid rgba(0,245,212,0.08);font-size:0.69rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+    .mac-dots{display:flex;gap:6px;}
+    .md{width:11px;height:11px;border-radius:50%;}
+    .md-r{background:#ff5f5f;}.md-y{background:#ffbe2e;}.md-g{background:#29c940;}
+    .term-lbl{display:flex;align-items:center;gap:0.4rem;}
+    .tld{width:7px;height:7px;border-radius:50%;background:rgba(0,245,212,0.5);}
+    .sync-lbl span{color:#3a8888;}
+
+    .term-body{max-height:400px;overflow-y:auto;padding:0.75rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.85;scrollbar-width:thin;scrollbar-color:rgba(0,245,212,0.25) rgba(0,0,0,0.2);}
+    .term-body::-webkit-scrollbar{width:7px;}
+    .term-body::-webkit-scrollbar-thumb{background:rgba(0,245,212,0.2);border-radius:999px;border:2px solid rgba(8,12,28,0.7);}
+
+    .ph{color:rgba(0,245,212,0.25);font-style:italic;}
+    .ph::after{content:'_';animation:blinkU 1s step-end infinite;color:var(--cyan);}
+    @keyframes blinkU{0%,100%{opacity:1;}50%{opacity:0;}}
+
+    .log-line{display:flex;flex-wrap:wrap;gap:0.35rem;align-items:baseline;border-radius:6px;padding:2px 6px;transition:background 0.15s;}
+    .log-line:hover{background:rgba(0,245,212,0.04);}
+    .log-line.new-log{animation:logSlide 0.35s ease;}
+    @keyframes logSlide{from{opacity:0;transform:translateX(-10px);}to{opacity:1;transform:translateX(0);}}
+    .log-ts{color:rgba(0,245,212,0.3);white-space:nowrap;}
+    .log-sender{font-weight:600;}
+    .log-issue{color:rgba(200,240,215,0.85);word-break:break-word;}
+    .log-ai{display:block;padding-left:1.2rem;font-size:11.5px;color:rgba(139,92,246,0.75);}
+    .log-offline{color:#ff7070;}
+    .sc-0{color:#00f5d4;}.sc-1{color:#8b5cf6;}.sc-2{color:#60a5fa;}.sc-3{color:#34d399;}.sc-4{color:#f472b6;}.sc-5{color:#fbbf24;}
+
+    @media(max-width:640px){.stats-grid{grid-template-columns:1fr;}.term-body{max-height:260px;}}
+  </style>
+</head>
+<body>
+  <canvas id="c-matrix"></canvas>
+  <canvas id="c-grid"></canvas>
+  <div class="scan-sweep"></div>
+
+  <div class="page">
+    <div class="inner">
+
+      <!-- Header -->
+      <header class="glass hdr fu d1">
+        <div class="logo-row">
+          <div class="logo-icon"><i data-lucide="activity" width="20" height="20"></i></div>
+          <div class="logo-txt">
+            <h1>Support Systems</h1>
+            <p>live_monitoring_dashboard</p>
+          </div>
+        </div>
+        <div class="hdr-right">
+          <div id="liveClock">--:--:--</div>
+          <div id="statusOnline" class="status-wrap s-online">
+            <div class="radar"><div class="radar-dot"></div><div class="radar-ring"></div></div>
+            System Online
+          </div>
+          <div id="statusOffline" class="status-wrap s-offline show">
+            <div class="dot-r"></div>Backend Offline
+          </div>
+          <button class="btn-out" id="logoutBtn"><i data-lucide="log-out" width="13" height="13"></i>Logout</button>
+        </div>
+      </header>
+
+      <!-- Stats -->
+      <section class="stats-grid">
+        <div class="glass stat-card fu d2" id="cMsg">
+          <div class="stat-ico"><i data-lucide="message-square" width="22" height="22"></i></div>
+          <div style="flex:1;">
+            <div class="stat-lbl">Total Messages</div>
+            <div class="stat-val" id="statTotal">0</div>
+            <div class="waveform" id="wvTotal"></div>
+          </div>
+        </div>
+        <div class="glass stat-card fu d3" id="cAi">
+          <div class="stat-ico"><i data-lucide="sparkles" width="22" height="22"></i></div>
+          <div style="flex:1;">
+            <div class="stat-lbl">AI Resolutions</div>
+            <div class="stat-val" id="statAi">0</div>
+            <div class="waveform" id="wvAi"></div>
+          </div>
+        </div>
+        <div class="glass stat-card fu d4" id="cSess">
+          <div class="stat-ico"><i data-lucide="users" width="22" height="22"></i></div>
+          <div style="flex:1;">
+            <div class="stat-lbl">Active Sessions</div>
+            <div class="stat-val" id="statSess">0</div>
+            <div class="waveform" id="wvSess"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Terminal -->
+      <section class="glass term-wrap fu d5">
+        <div class="term-hdr">
+          <div class="term-title-row">
+            <div class="term-ico"><i data-lucide="terminal" width="18" height="18"></i></div>
+            <div class="term-info">
+              <h2>Live Log Console</h2>
+              <p>data_stream · auto_scroll_enabled</p>
+            </div>
+          </div>
+          <div class="cnt-badge"><span id="logCount">0</span> entries</div>
+        </div>
+        <div class="term-win">
+          <div class="term-bar">
+            <div class="mac-dots"><div class="md md-r"></div><div class="md md-y"></div><div class="md md-g"></div></div>
+            <div class="term-lbl"><div class="tld"></div>support-systems :: live</div>
+            <div class="sync-lbl">sync: <span id="lastSync">—</span></div>
+          </div>
+          <div id="logContainer" class="term-body">
+            <div class="ph">Awaiting data stream</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script>
+    /* Auth */
+    try{if(!localStorage.getItem('authToken'))window.location.replace('login.html');}
+    catch(e){window.location.replace('login.html');}
+
+    lucide.createIcons();
+
+    /* ── Matrix rain ── */
+    (function(){
+      const cv=document.getElementById('c-matrix'),cx=cv.getContext('2d');
+      let W,H;
+      const rsz=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight;init();};
+      const chars='01010110011001001101001110000101110111001001011010100101010011101011000101110110001000111101'+'0123456789ABCDEF'+'#$%@!?&*+=<>{}[]|/\\';
+      let cols,drops;
+      function init(){cols=Math.floor(W/20);drops=Array.from({length:cols},()=>Math.random()*-H/16);}
+      rsz(); addEventListener('resize',rsz);
+      function draw(){
+        cx.fillStyle='rgba(5,8,15,0.13)';cx.fillRect(0,0,W,H);
+        cx.font='bold 14px "Courier New", Courier, monospace';
+        for(let i=0;i<cols;i++){
+          const ch=chars[Math.floor(Math.random()*chars.length)];
+          const y=drops[i]*16;
+          /* head char — bright white-cyan */
+          cx.fillStyle=`rgba(220,255,250,${Math.random()*0.3+0.75})`;
+          cx.fillText(ch,i*20,y);
+          /* trail chars — 3 levels of fade */
+          const v=Math.random();
+          cx.fillStyle=v<0.25
+            ?`rgba(139,92,246,${Math.random()*0.22+0.06})`   /* violet */
+            :`rgba(0,${Math.floor(Math.random()*50+195)},${Math.floor(Math.random()*30+205)},${Math.random()*0.25+0.06})`; /* cyan */
+          cx.fillText(chars[Math.floor(Math.random()*chars.length)],i*20,y-16);
+          cx.fillStyle=`rgba(0,180,200,${Math.random()*0.1+0.02})`;
+          cx.fillText(chars[Math.floor(Math.random()*chars.length)],i*20,y-32);
+          if(y>H&&Math.random()>0.972)drops[i]=0;
+          drops[i]+=0.42;
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    /* ── Circuit grid ── */
+    (function(){
+      const cv=document.getElementById('c-grid'),cx=cv.getContext('2d');
+      let W,H;
+      function draw(){
+        W=cv.width=innerWidth;H=cv.height=innerHeight;
+        cx.clearRect(0,0,W,H);cx.strokeStyle='rgba(0,255,136,1)';cx.lineWidth=0.6;
+        const gs=48;
+        for(let x=0;x<W;x+=gs){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke();}
+        for(let y=0;y<H;y+=gs){cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();}
+        /* random circuit dots at intersections */
+        for(let x=0;x<W;x+=gs)for(let y=0;y<H;y+=gs){
+          if(Math.random()<0.12){cx.beginPath();cx.arc(x,y,1.5,0,Math.PI*2);cx.fillStyle=Math.random()<0.3?'rgba(139,92,246,0.7)':'rgba(0,245,212,0.8)';cx.fill();}
+        }
+      }
+      draw(); addEventListener('resize',draw);
+    })();
+
+    /* ── Waveform bars init ── */
+    function initWave(id,n){
+      const el=document.getElementById(id);
+      for(let i=0;i<n;i++){const b=document.createElement('div');b.className='wav-bar';b.style.animationDelay=`${i*0.08}s`;el.appendChild(b);}
+    }
+    initWave('wvTotal',18);initWave('wvAi',18);initWave('wvSess',18);
+
+    function updateWave(id,val,max){
+      const bars=document.getElementById(id).children;
+      const pct=max>0?val/max:0;
+      for(let i=0;i<bars.length;i++){
+        const noise=Math.random()*0.4+0.6;
+        const h=Math.max(3,pct*22*noise);
+        bars[i].style.height=h+'px';bars[i].style.opacity=0.3+pct*0.6;
+      }
+    }
+
+    /* ── Clock ── */
+    function tick(){document.getElementById('liveClock').textContent=new Date().toLocaleTimeString();}
+    tick();setInterval(tick,1000);
+
+    /* ── Logout ── */
+    document.getElementById('logoutBtn').addEventListener('click',()=>{try{localStorage.removeItem('authToken');}catch(e){}window.location.replace('login.html');});
+
+    const stOn=document.getElementById('statusOnline'),stOff=document.getElementById('statusOffline');
+    function setOnline(){stOff.classList.remove('show');stOn.classList.add('show');}
+    function setOffline(){stOn.classList.remove('show');stOff.classList.add('show');}
+
+    /* Counter */
+    function animCount(el,target){
+      const cur=parseInt(el.textContent)||0;if(cur===target)return;
+      const steps=Math.min(Math.abs(target-cur),20),step=(target-cur)/steps;
+      let v=cur,i=0;const t=setInterval(()=>{i++;v+=step;el.textContent=Math.round(i<steps?v:target);if(i>=steps)clearInterval(t);},30);
+    }
+
+    const colors=['sc-0','sc-1','sc-2','sc-3','sc-4','sc-5'];
+    let cMap={},cIdx=0;
+    function sc(s){if(!cMap[s])cMap[s]=colors[cIdx++%colors.length];return cMap[s];}
+    function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
+    function fmtTs(ts){if(!ts)return new Date().toLocaleTimeString();const d=new Date(ts);return isNaN(d)?new Date().toLocaleTimeString():d.toLocaleString();}
+    function norm(l){const s=l.sender??'unknown',iss=l.issue??'',ts=l.timestamp??l.time??null,id=l.id??l._id??(ts?`${s}|${iss}|${new Date(ts).toISOString()}`:`${s}|${iss}`);return{id:String(id),sender:String(s),issue:String(iss),timestamp:ts,ai_response:l.ai_response??null};}
+
+    const logBox=document.getElementById('logContainer'),cntEl=document.getElementById('logCount'),syncEl=document.getElementById('lastSync');
+    let knownIds=new Set(),latestTs=null,maxTot=1,maxAi=1,maxSess=1;
+
+    function appendLog(l){
+      const ph=logBox.querySelector('.ph');if(ph)ph.remove();
+      const el=document.createElement('div');el.className='log-line new-log';
+      const ai=l.ai_response?`<span class="log-ai">→ ${esc(l.ai_response)}</span>`:'';
+      el.innerHTML=`<span class="log-ts">[${fmtTs(l.timestamp)}]</span><span class="log-sender ${sc(l.sender)}">${esc(l.sender)}</span><span class="log-issue">${esc(l.issue)}${ai}</span>`;
+      logBox.appendChild(el);logBox.scrollTop=logBox.scrollHeight;
+    }
+
+    async function poll(){
+      try{
+        const url=latestTs?`http://localhost:8000/logs?since=${encodeURIComponent(latestTs)}`:'http://localhost:8000/logs';
+        const res=await fetch(url,{cache:'no-store'});if(!res.ok)throw new Error();
+        const p=await res.json();
+        const tot=p?.stats?.totalMessages??0,ai=p?.stats?.aiResolutions??0,sess=p?.stats?.activeSessions??0;
+        maxTot=Math.max(maxTot,tot||1);maxAi=Math.max(maxAi,ai||1);maxSess=Math.max(maxSess,sess||1);
+        animCount(document.getElementById('statTotal'),tot);
+        animCount(document.getElementById('statAi'),ai);
+        animCount(document.getElementById('statSess'),sess);
+        updateWave('wvTotal',tot,maxTot);updateWave('wvAi',ai,maxAi);updateWave('wvSess',sess,maxSess);
+        setOnline();syncEl.textContent=new Date().toLocaleTimeString();
+        const logs=(p?.logs??p?.data??[]).map(norm);
+        let added=0;
+        for(const l of logs){if(!knownIds.has(l.id)){knownIds.add(l.id);appendLog(l);added++;}}
+        if(logs.length>0&&logs[0].timestamp)latestTs=logs[0].timestamp;
+        cntEl.textContent=String(knownIds.size);
+        if(added>0){['cMsg','cAi','cSess'].forEach(id=>{const c=document.getElementById(id);c.classList.remove('flash');void c.offsetWidth;c.classList.add('flash');});}
+        const ow=logBox.querySelector('[data-off]');if(ow)ow.remove();
+      }catch(e){
+        setOffline();syncEl.textContent='—';
+        if(!logBox.querySelector('[data-off]')){
+          const w=document.createElement('div');w.dataset.off='1';w.className='log-line log-offline';
+          w.innerHTML=`<span class="log-ts">[${new Date().toLocaleTimeString()}]</span><span>CONNECTION_LOST :: retrying…</span>`;
+          logBox.appendChild(w);logBox.scrollTop=logBox.scrollHeight;
+        }
+      }
+    }
+    poll();setInterval(poll,3000);
+  </script>
+</body>
+</html>

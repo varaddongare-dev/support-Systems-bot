@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support Systems — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{--cyan:#00f5d4;--violet:#8b5cf6;--bg:#05080f;--surface:rgba(8,12,28,0.85);--border:rgba(0,245,212,0.2);--text:#e8f4f0;--muted:#4a7068;color-scheme:dark;}
+    html,body{height:100%;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
+
+    /* ── Canvas layers ── */
+    #c-aurora{position:fixed;inset:0;z-index:0;pointer-events:none;}
+    #c-particles{position:fixed;inset:0;z-index:1;pointer-events:none;}
+
+    /* ── Page ── */
+    .page{position:relative;z-index:3;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem;}
+
+    /* ── Card entrance ── */
+    .card-wrap{width:100%;max-width:420px;display:flex;flex-direction:column;gap:1rem;opacity:0;transform:translateY(36px) scale(0.96);animation:cardIn 0.8s cubic-bezier(0.22,1,0.36,1) 0.2s forwards;}
+    @keyframes cardIn{to{opacity:1;transform:translateY(0) scale(1);}}
+
+    /* ── Glass ── */
+    .glass{background:var(--surface);border-radius:22px;border:1px solid var(--border);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 12px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.06);position:relative;overflow:hidden;}
+
+    /* Aurora shimmer inside card */
+    .glass::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,245,212,0.04) 0%,transparent 50%,rgba(139,92,246,0.04) 100%);pointer-events:none;animation:shimmer 6s ease-in-out infinite alternate;}
+    @keyframes shimmer{from{opacity:0.4;}to{opacity:1;}}
+
+    /* Glowing top edge */
+    .glass::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,245,212,0.7),rgba(139,92,246,0.5),transparent);animation:edgeGlow 4s ease-in-out infinite alternate;}
+    @keyframes edgeGlow{from{opacity:0.4;left:10%;right:10%;}to{opacity:1;left:3%;right:3%;}}
+
+    /* ── Header card ── */
+    .hdr-card{padding:1rem 1.3rem;display:flex;align-items:center;gap:0.9rem;}
+    .logo-icon{width:46px;height:46px;border-radius:14px;flex-shrink:0;background:rgba(0,245,212,0.1);border:1px solid rgba(0,245,212,0.3);display:flex;align-items:center;justify-content:center;animation:logoFloat 4s ease-in-out infinite;}
+    @keyframes logoFloat{0%,100%{transform:translateY(0);box-shadow:0 0 14px rgba(0,245,212,0.4);}50%{transform:translateY(-4px);box-shadow:0 8px 28px rgba(0,245,212,0.7);}}
+    .logo-icon svg{color:var(--cyan);}
+    .hdr-text h1{font-size:1.18rem;font-weight:700;letter-spacing:-0.025em;}
+    .hdr-text p{font-size:0.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+    .secure-badge{margin-left:auto;font-size:0.68rem;font-family:'JetBrains Mono',monospace;color:var(--cyan);display:flex;align-items:center;gap:0.35rem;}
+    .sb-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:sbPulse 1.4s ease-in-out infinite;}
+    @keyframes sbPulse{0%,100%{opacity:1;box-shadow:0 0 4px var(--cyan);}50%{opacity:0.3;box-shadow:none;}}
+
+    /* ── Form card ── */
+    .form-card{padding:1.85rem;}
+    .form-title{font-size:1.55rem;font-weight:700;letter-spacing:-0.04em;background:linear-gradient(120deg,#ffffff 20%,var(--cyan) 60%,var(--violet) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200%;animation:titleShift 5s ease-in-out infinite alternate;}
+    @keyframes titleShift{from{background-position:0%;}to{background-position:100%;}}
+    .form-sub{font-size:0.76rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:0.3rem;margin-bottom:1.8rem;overflow:hidden;white-space:nowrap;width:0;border-right:2px solid var(--cyan);animation:typeIn 2s steps(42) 0.8s forwards,blinkC 0.75s step-end 2.8s infinite;}
+    @keyframes typeIn{to{width:100%;}}
+    @keyframes blinkC{0%,100%{border-color:var(--cyan);}50%{border-color:transparent;}}
+
+    /* ── Fields ── */
+    .field{position:relative;margin-bottom:1.1rem;}
+    .field-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;display:flex;align-items:center;transition:color 0.25s;}
+    label{position:absolute;left:42px;top:50%;transform:translateY(-50%);font-size:0.85rem;color:var(--muted);pointer-events:none;transition:all 0.22s cubic-bezier(0.4,0,0.2,1);}
+    input[type="text"],input[type="password"]{width:100%;padding:0.88rem 2.8rem 0.88rem 2.75rem;border-radius:13px;border:1px solid rgba(0,245,212,0.15);background:rgba(0,5,20,0.5);color:var(--text);font-size:0.9rem;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.25s,box-shadow 0.25s,background 0.25s;}
+    input:focus{border-color:rgba(0,245,212,0.6);background:rgba(0,10,28,0.65);box-shadow:0 0 0 3px rgba(0,245,212,0.1),0 0 30px rgba(0,245,212,0.06);}
+    input:focus~label,input:not(:placeholder-shown)~label{transform:translateY(-178%) scale(0.77);color:var(--cyan);left:38px;}
+    input:focus~.field-ico{color:var(--cyan);}
+    .pw-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);display:flex;padding:0;transition:color 0.2s;}
+    .pw-btn:hover{color:var(--cyan);}
+
+    /* ── Submit ── */
+    .btn-login{width:100%;margin-top:0.5rem;padding:0.88rem;border-radius:13px;border:1px solid rgba(0,245,212,0.35);background:linear-gradient(135deg,rgba(0,120,100,0.55),rgba(80,0,160,0.35));color:#c0fff5;font-size:0.93rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;position:relative;overflow:hidden;transition:transform 0.14s,box-shadow 0.25s,border-color 0.25s;}
+    .btn-login::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,245,212,0.12),rgba(139,92,246,0.12));opacity:0;transition:opacity 0.3s;}
+    .btn-login:hover::before{opacity:1;}
+    .btn-login:hover{border-color:rgba(0,245,212,0.7);box-shadow:0 0 32px rgba(0,245,212,0.22),0 0 60px rgba(139,92,246,0.12),0 6px 22px rgba(0,0,0,0.45);}
+    .btn-login:active{transform:scale(0.982);}
+    /* Wave ripple */
+    .ripple{position:absolute;border-radius:50%;background:rgba(0,245,212,0.22);transform:scale(0);animation:rippleOut 0.6s ease-out forwards;pointer-events:none;}
+    @keyframes rippleOut{to{transform:scale(4.5);opacity:0;}}
+    .btn-login.loading{pointer-events:none;opacity:0.6;}
+    .btn-spin{display:none;width:16px;height:16px;border:2px solid rgba(0,245,212,0.3);border-top-color:var(--cyan);border-radius:50%;animation:spin 0.7s linear infinite;}
+    .btn-login.loading .btn-spin{display:block;}
+    .btn-login.loading .btn-lbl{display:none;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* ── Error ── */
+    #error{display:none;margin-top:0.85rem;padding:0.65rem 0.9rem;border-radius:11px;background:rgba(255,60,60,0.1);border:1px solid rgba(255,80,80,0.3);color:#ffaaaa;font-size:0.82rem;align-items:center;gap:0.5rem;}
+    #error.show{display:flex;animation:shake 0.4s ease;}
+    @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
+
+    /* ── Footer ── */
+    .hint{margin-top:1.3rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.05);font-size:0.71rem;color:#2a4038;}
+    .hint span{color:var(--muted);}
+    .badge{text-align:center;font-size:0.67rem;color:#1a2830;letter-spacing:0.07em;font-family:'JetBrains Mono',monospace;}
+  </style>
+</head>
+<body>
+  <canvas id="c-aurora"></canvas>
+  <canvas id="c-particles"></canvas>
+
+  <div class="page">
+    <div class="card-wrap">
+
+      <header class="glass hdr-card">
+        <div class="logo-icon"><i data-lucide="shield-check" width="21" height="21"></i></div>
+        <div class="hdr-text">
+          <h1>Support Systems</h1>
+          <p>admin_secure_portal</p>
+        </div>
+        <div class="secure-badge"><div class="sb-dot"></div>SECURE</div>
+      </header>
+
+      <section class="glass form-card">
+        <div class="form-title">Welcome back</div>
+        <div class="form-sub">Authenticate to access the live dashboard&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+        <form id="loginForm" autocomplete="off">
+          <div class="field">
+            <input id="username" type="text" value="ADMIN" placeholder=" " required />
+            <span class="field-ico"><i data-lucide="user" width="15" height="15"></i></span>
+            <label for="username">Username</label>
+          </div>
+          <div class="field">
+            <input id="password" type="password" value="AdminLogin" placeholder=" " required />
+            <span class="field-ico"><i data-lucide="lock" width="15" height="15"></i></span>
+            <label for="password">Password</label>
+            <button type="button" class="pw-btn" id="pwBtn"><i data-lucide="eye" width="15" height="15" id="eyeIco"></i></button>
+          </div>
+
+          <button type="submit" class="btn-login" id="loginBtn">
+            <div class="btn-spin"></div>
+            <span class="btn-lbl" style="display:flex;align-items:center;gap:0.45rem;"><i data-lucide="log-in" width="16" height="16"></i>Sign In</span>
+          </button>
+          <div id="error"><i data-lucide="alert-circle" width="14" height="14" style="color:#ff6b6b;flex-shrink:0;"></i><span id="errMsg">Invalid credentials.</span></div>
+        </form>
+
+        <div class="hint">Demo credentials — <span>ADMIN</span> / <span>AdminLogin</span></div>
+      </section>
+
+      <div class="badge">SUPPORT SYSTEMS &nbsp;·&nbsp; ADMIN PORTAL</div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    /* ── Aurora canvas ── */
+    (function(){
+      const cv=document.getElementById('c-aurora'),cx=cv.getContext('2d');
+      let W,H,t=0;
+      const rsz=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight;};
+      rsz(); addEventListener('resize',rsz);
+      const bands=[
+        {amp:0.12,freq:0.6,phase:0,speed:0.4,colors:['rgba(0,245,212,0)','rgba(0,245,212,0.18)','rgba(0,200,180,0.22)','rgba(0,245,212,0)']},
+        {amp:0.10,freq:0.45,phase:2.1,speed:0.3,colors:['rgba(139,92,246,0)','rgba(139,92,246,0.14)','rgba(100,60,220,0.18)','rgba(139,92,246,0)']},
+        {amp:0.09,freq:0.8,phase:4.3,speed:0.55,colors:['rgba(0,180,255,0)','rgba(0,180,255,0.12)','rgba(0,140,220,0.15)','rgba(0,180,255,0)']},
+      ];
+      function drawBand(b,bh){
+        const yBase=H*0.38+Math.sin(t*b.speed+b.phase)*H*0.07;
+        const grad=cx.createLinearGradient(0,yBase-bh,0,yBase+bh);
+        b.colors.forEach((c,i)=>grad.addColorStop(i/3,c));
+        cx.beginPath();
+        for(let x=0;x<=W;x+=4){
+          const y=yBase+Math.sin(x*b.freq*0.008+t*b.speed+b.phase)*H*b.amp;
+          x===0?cx.moveTo(x,y):cx.lineTo(x,y);
+        }
+        cx.lineTo(W,H);cx.lineTo(0,H);cx.closePath();
+        cx.fillStyle=grad;cx.fill();
+      }
+      function draw(){
+        t+=0.008;
+        cx.clearRect(0,0,W,H);
+        /* deep bg gradient */
+        const bg=cx.createLinearGradient(0,0,0,H);
+        bg.addColorStop(0,'#05080f');bg.addColorStop(0.5,'#060c1a');bg.addColorStop(1,'#040810');
+        cx.fillStyle=bg;cx.fillRect(0,0,W,H);
+        for(const b of bands)drawBand(b,H*0.28);
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    /* ── Firefly particles ── */
+    (function(){
+      const cv=document.getElementById('c-particles'),cx=cv.getContext('2d');
+      let W,H;
+      const rsz=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight;};
+      rsz(); addEventListener('resize',rsz);
+      const pts=Array.from({length:90},()=>({
+        x:Math.random()*innerWidth,y:innerHeight+Math.random()*200,
+        r:Math.random()*1.8+0.4,a:Math.random()*0.7+0.1,
+        dx:(Math.random()-0.5)*0.3,dy:-(Math.random()*0.5+0.2),
+        da:(Math.random()*0.01+0.003)*(Math.random()<0.5?1:-1),
+        color:Math.random()<0.6?'0,245,212':'139,92,246'
+      }));
+      (function draw(){
+        cx.clearRect(0,0,W,H);
+        for(const p of pts){
+          p.x+=p.dx;p.y+=p.dy;p.a+=p.da;
+          if(p.a<0.05||p.a>0.9)p.da*=-1;
+          if(p.y<-10){p.y=H+10;p.x=Math.random()*W;}
+          /* glow */
+          const g=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*4);
+          g.addColorStop(0,`rgba(${p.color},${p.a})`);
+          g.addColorStop(1,`rgba(${p.color},0)`);
+          cx.beginPath();cx.arc(p.x,p.y,p.r*4,0,Math.PI*2);cx.fillStyle=g;cx.fill();
+        }
+        requestAnimationFrame(draw);
+      })();
+    })();
+
+    /* ── Password toggle ── */
+    let vis=false;
+    document.getElementById('pwBtn').addEventListener('click',()=>{
+      vis=!vis;document.getElementById('password').type=vis?'text':'password';
+      document.getElementById('eyeIco').setAttribute('data-lucide',vis?'eye-off':'eye');lucide.createIcons();
+    });
+
+    /* ── Ripple ── */
+    document.getElementById('loginBtn').addEventListener('click',function(e){
+      const r=document.createElement('span');r.className='ripple';
+      const rc=this.getBoundingClientRect(),sz=Math.max(rc.width,rc.height);
+      r.style.cssText=`width:${sz}px;height:${sz}px;left:${e.clientX-rc.left-sz/2}px;top:${e.clientY-rc.top-sz/2}px;`;
+      this.appendChild(r);setTimeout(()=>r.remove(),700);
+    });
+
+    /* ── Login ── */
+    const API='http://localhost:8000/login';
+    const btn=document.getElementById('loginBtn');
+    const errEl=document.getElementById('error'),errMsg=document.getElementById('errMsg');
+    function showErr(m){errMsg.textContent=m||'Invalid credentials.';errEl.classList.remove('show');void errEl.offsetWidth;errEl.classList.add('show');errEl.style.display='flex';lucide.createIcons();}
+    function hideErr(){errEl.classList.remove('show');errEl.style.display='none';}
+
+    document.getElementById('loginForm').addEventListener('submit',async e=>{
+      e.preventDefault();hideErr();btn.classList.add('loading');
+      const u=document.getElementById('username').value.trim(),p=document.getElementById('password').value;
+      try{
+        const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+        let pl={};try{pl=await res.json();}catch(_){}
+        if(!res.ok||pl?.success!==true||!pl?.token){showErr(pl?.message||`Invalid credentials (HTTP ${res.status})`);return;}
+        localStorage.setItem('authToken',pl.token);window.location.href='dashboard.html';
+      }catch(err){showErr('Cannot reach server. Is the backend running?');}
+      finally{btn.classList.remove('loading');}
+    });
+  </script>
+</body>
+</html>
