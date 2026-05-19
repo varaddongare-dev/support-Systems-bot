@@ -47,18 +47,20 @@ Create a .env file in the root folder and add your API key:
 Code snippet
 GEMINI_API_KEY=your_actual_api_key_here
 BRAIN_URL=<http://localhost:8000/process>
-Running the Bot
-You will need to keep two terminals open simultaneously:
+### Running the Bot
 
-Terminal 1 (The Brain):
+You can now start both the Brain (Python) and the Messenger (Node) with a single command from the project root:
 
-Bash
-python main.py
-Terminal 2 (The Messenger):
+```bash
+npm run dev
+```
 
-Bash
-node index.js
-Once both are running, scan the QR code that appears in your terminal with your WhatsApp linked devices to begin.
+This uses `concurrently` to run both services in one terminal window. Once both are running, scan the QR code that appears in your terminal with your WhatsApp linked devices to begin.
+
+*Alternatively, if you prefer running them separately:*
+
+1. **Terminal 1 (The Brain):** `python Ssystems_Backend/main.py`
+2. **Terminal 2 (The Messenger):** `cd Ssystems_Frontend && node index.js`
 
 Roadmap
 Building is never finished. Here is what is currently in development:

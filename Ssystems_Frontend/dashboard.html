@@ -12,8 +12,8 @@
     :root{--cyan:#00f5d4;--violet:#8b5cf6;--cyan-dim:rgba(0,245,212,0.1);--bg:#05080f;--surface:rgba(8,12,28,0.88);--border:rgba(0,245,212,0.2);--text:#e8f4f0;--muted:#4a7068;color-scheme:dark;}
     html,body{height:100%;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
 
-    /* ── Neural network canvas ── */
-    #c-neural{position:fixed;inset:0;z-index:0;pointer-events:none;}
+    /* ── Matrix rain canvas ── */
+    #c-matrix{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.6;}
 
     /* ── Layout ── */
     .page{position:relative;z-index:3;min-height:100vh;padding:1.4rem 1rem 3rem;}
@@ -114,13 +114,15 @@
     .log-offline{color:#ff7070;}
     .sc-0{color:#00f5d4;}.sc-1{color:#8b5cf6;}.sc-2{color:#60a5fa;}.sc-3{color:#34d399;}.sc-4{color:#f472b6;}.sc-5{color:#fbbf24;}
 
+    /* ── Vignette & Effects ── */
+    .vignette{position:fixed;inset:0;background:radial-gradient(circle at center,transparent 40%,rgba(5,8,15,0.85) 100%);z-index:1;pointer-events:none;}
+    
     @media(max-width:640px){.stats-grid{grid-template-columns:1fr;}.term-body{max-height:260px;}}
   </style>
 </head>
 <body>
   <canvas id="c-matrix"></canvas>
-  <canvas id="c-grid"></canvas>
-  <div class="scan-sweep"></div>
+  <div class="vignette"></div>
 
   <div class="page">
     <div class="inner">
@@ -214,51 +216,54 @@
       const cv=document.getElementById('c-matrix'),cx=cv.getContext('2d');
       let W,H;
       const rsz=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight;init();};
-      const chars='01010110011001001101001110000101110111001001011010100101010011101011000101110110001000111101'+'0123456789ABCDEF'+'#$%@!?&*+=<>{}[]|/\\';
+      
+      // Matrix-style characters
+      const chars='01010110011001001101001110000101110111001001011010100101010011101011000101110110001000111101'+'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ';
       let cols,drops;
-      function init(){cols=Math.floor(W/20);drops=Array.from({length:cols},()=>Math.random()*-H/16);}
+      function init(){
+        cols=Math.floor(W/18);
+        drops=Array.from({length:cols},()=>Math.random()*-H/14);
+      }
       rsz(); addEventListener('resize',rsz);
+
       function draw(){
-        cx.fillStyle='rgba(5,8,15,0.13)';cx.fillRect(0,0,W,H);
-        cx.font='bold 14px "Courier New", Courier, monospace';
+        // Fading background for trail effect
+        cx.fillStyle='rgba(5,8,15,0.1)';
+        cx.fillRect(0,0,W,H);
+        
+        cx.font='15px "JetBrains Mono", monospace';
+        
         for(let i=0;i<cols;i++){
-          const ch=chars[Math.floor(Math.random()*chars.length)];
-          const y=drops[i]*16;
-          /* head char — bright white-cyan */
-          cx.fillStyle=`rgba(220,255,250,${Math.random()*0.3+0.75})`;
-          cx.fillText(ch,i*20,y);
-          /* trail chars — 3 levels of fade */
-          const v=Math.random();
-          cx.fillStyle=v<0.25
-            ?`rgba(139,92,246,${Math.random()*0.22+0.06})`   /* violet */
-            :`rgba(0,${Math.floor(Math.random()*50+195)},${Math.floor(Math.random()*30+205)},${Math.random()*0.25+0.06})`; /* cyan */
-          cx.fillText(chars[Math.floor(Math.random()*chars.length)],i*20,y-16);
-          cx.fillStyle=`rgba(0,180,200,${Math.random()*0.1+0.02})`;
-          cx.fillText(chars[Math.floor(Math.random()*chars.length)],i*20,y-32);
-          if(y>H&&Math.random()>0.972)drops[i]=0;
-          drops[i]+=0.42;
+          const text=chars[Math.floor(Math.random()*chars.length)];
+          const x = i * 18;
+          const y = drops[i] * 18;
+
+          // Drawing different layers of the rain
+          
+          // 1. Glowing head
+          cx.fillStyle='#fff';
+          cx.shadowBlur=10;
+          cx.shadowColor='#00f5d4';
+          cx.fillText(text, x, y);
+          
+          // 2. Main body (cyan/violet mix)
+          cx.shadowBlur=0;
+          const gradient = cx.createLinearGradient(x, y-100, x, y);
+          gradient.addColorStop(0, 'rgba(139,92,246,0)');
+          gradient.addColorStop(0.5, 'rgba(139,92,246,0.3)');
+          gradient.addColorStop(1, 'rgba(0,245,212,0.8)');
+          cx.fillStyle=gradient;
+          cx.fillText(text, x, y);
+
+          // Reset drop if it reaches bottom
+          if(y > H && Math.random() > 0.975) drops[i]=0;
+          
+          // Increment drop position with slight randomness
+          drops[i] += (0.4 + Math.random() * 0.2);
         }
         requestAnimationFrame(draw);
       }
       draw();
-    })();
-
-    /* ── Circuit grid ── */
-    (function(){
-      const cv=document.getElementById('c-grid'),cx=cv.getContext('2d');
-      let W,H;
-      function draw(){
-        W=cv.width=innerWidth;H=cv.height=innerHeight;
-        cx.clearRect(0,0,W,H);cx.strokeStyle='rgba(0,255,136,1)';cx.lineWidth=0.6;
-        const gs=48;
-        for(let x=0;x<W;x+=gs){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke();}
-        for(let y=0;y<H;y+=gs){cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();}
-        /* random circuit dots at intersections */
-        for(let x=0;x<W;x+=gs)for(let y=0;y<H;y+=gs){
-          if(Math.random()<0.12){cx.beginPath();cx.arc(x,y,1.5,0,Math.PI*2);cx.fillStyle=Math.random()<0.3?'rgba(139,92,246,0.7)':'rgba(0,245,212,0.8)';cx.fill();}
-        }
-      }
-      draw(); addEventListener('resize',draw);
     })();
 
     /* ── Waveform bars init ── */

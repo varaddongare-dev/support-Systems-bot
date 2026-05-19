@@ -1,0 +1,18 @@
+{
+  "name": "support-systems-bot",
+  "version": "1.0.0",
+  "description": "Support Systems WhatsApp Bot and Backend Orchestrator",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"python Ssystems_Backend/main.py\" \"cd Ssystems_Frontend && node index.js\"",
+    "install-all": "npm install && cd Ssystems_Frontend && npm install",
+    "backend": "python Ssystems_Backend/main.py",
+    "bot": "node Ssystems_Frontend/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

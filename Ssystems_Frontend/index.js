@@ -68,22 +68,26 @@ client.on('ready', () => {
 });
 
 // --- 5. EXACT THERAPY TRIGGERS (from supportsystems.co.in) ---
-// Keys are lowercased exact text sent via wa.me links on the website.
+// Keys are normalized (lowercased, no punctuation) text sent via wa.me links on the website.
 // ONLY these messages get a reply. Everything else: total silence.
 const THERAPY_RESPONSES = {
-    'felt confused about which therapist to choose or trust?':
+    'felt confused about which therapist to choose or trust':
         "Trust me, we understand that it can be overwhelming and difficult. So, let us take care of it for you. Our team will get in touch with you shortly. We're here for you.",
-    "tried therapy, but it didn't feel right?":
+    'tried therapy but it didnt feel right':
         "We're sorry you had to go through that. This happens more often than you think, that's why we're here to get you the right person for you. Our team will get in touch with you shortly. We're here for you.",
-    'not sure if you need therapy, medication, or both?':
+    'not sure if you need therapy medication or both':
         "It's a fair confusion, let's figure it out together. Our team will get in touch with you shortly. We're here for you.",
-    'felt the need to talk to somebody about your feelings, judgment-free?':
+    'felt the need to talk to somebody about your feelings judgment-free':
         "We're glad you reached out! Our team will get in touch with you shortly. We're here for you.",
-    'felt the need to understand yourself better?':
+    'felt the need to understand yourself better':
         "We're glad you reached out! Our team will get in touch with you shortly. We're here for you.",
-    'or just anything else?':
+    'or just anything else':
         "We're glad you reached out! Our team will get in touch with you shortly. We're here for you."
 };
+
+function normalizeMsg(text) {
+    return (text || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+}
 
 // --- 6. CORE MESSAGE LOGIC (strict match only) ---
 client.on('message', async (msg) => {
@@ -91,12 +95,19 @@ client.on('message', async (msg) => {
     // Gate 1: Ignore everything until the session is fully live + never self-reply
     if (!isBotReady || msg.fromMe) return;
 
+    // Gate 1.5: Ignore historical messages (older than 60 seconds)
+    const now = Math.floor(Date.now() / 1000);
+    if (msg.timestamp < now - 60) {
+        console.log(`[SKIP] Historical message ignored from ${msg.from}`);
+        return;
+    }
+
     // Confirm the bot is seeing the message
     console.log('New Message Detected:', msg.body);
 
     const userNumber  = msg.from;
     const userMessage = (msg.body || '').trim();
-    const cleanMsg    = userMessage.toLowerCase();
+    const cleanMsg    = normalizeMsg(userMessage);
 
     // Log every incoming message so you can see what the bot is receiving
     console.log(`[MSG] New message received: "${userMessage}" from ${userNumber}`);
@@ -113,6 +124,15 @@ client.on('message', async (msg) => {
     // No match → total silence (no fallback, no AI)
     if (!reply) {
         console.log(`[SKIP] No match for: "${userMessage}"`);
+        
+        // Log the unmatched message to the backend
+        sendToBrain({
+            sender: userNumber,
+            issue: userMessage,
+            ai_response: "", // No AI response
+            resolved_with_ai: false
+        });
+        
         return;
     }
 
@@ -120,7 +140,7 @@ client.on('message', async (msg) => {
     sessions[userNumber] = { step: 'processing' };
 
     try {
-        await msg.reply(reply);
+        await client.sendMessage(userNumber, reply);
         console.log(`[SENT] Replied to ${userNumber}`);
     } catch (err) {
         console.error(`[ERROR] Reply failed: ${err.message}`);
@@ -138,6 +158,14 @@ client.on('message', async (msg) => {
 });
 
 // --- 7. STARTUP SEQUENCE ---
+process.on('SIGINT', async () => {
+    console.log('\n[INFO] Shutting down client cleanly...');
+    try {
+        await client.destroy();
+    } catch (e) {}
+    process.exit(0);
+});
+
 async function waitForBrain(retries = 10, delay = 2000) {
     for (let i = 0; i < retries; i++) {
         try {
